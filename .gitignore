@@ -1,4 +1,4 @@
-/.vscode
+/.vscode/settings.json
 /drones.jar
 /drones.mv.db
 /drones.trace.db
