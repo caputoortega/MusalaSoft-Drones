@@ -60,6 +60,11 @@ public class Drone extends BaseEntityModel {
         return this.serialNumber;
     }
 
+    /**
+     * Truncates the given string to 100 chars and
+     * stores it in the {@code serialNumber} attribute 
+     * @param serialNumber
+     */
     public void setSerialNumber(String serialNumber) {
 
         // Making sure the serialNumber doesn't contain
