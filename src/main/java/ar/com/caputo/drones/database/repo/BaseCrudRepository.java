@@ -1,6 +1,5 @@
 package ar.com.caputo.drones.database.repo;
 
-import java.lang.reflect.ParameterizedType;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -13,12 +12,13 @@ import com.j256.ormlite.table.TableUtils;
 
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
+import ar.com.caputo.drones.exception.UnmetConditionsException;
 
-public class BaseCrudRepository<T, I> {
+public class BaseCrudRepository<T, ID> {
 
     private final Class<T> type;
 
-    protected Dao<T, I> dao;
+    private Dao<T, ID> dao;
 
     public BaseCrudRepository(ConnectionSource source, Class<T> model) {
         this.type = model;
@@ -30,7 +30,7 @@ public class BaseCrudRepository<T, I> {
         }
     }
 
-    public T get(I id) throws ResourceNotFoundException {
+    public T get(ID id) throws ResourceNotFoundException {
 
         try { 
             
@@ -59,15 +59,13 @@ public class BaseCrudRepository<T, I> {
         
     }
 
-    public boolean addNew(T model) {
+    public boolean addNew(T model) throws UnmetConditionsException {
         
         try {
             return dao.create(model) == 1;
         } catch(SQLException ex) {
-            ex.printStackTrace();
+            throw new UnmetConditionsException(ex.getCause().getMessage());
         }
-
-        return false;
 
     }
 
@@ -83,7 +81,7 @@ public class BaseCrudRepository<T, I> {
 
     }
 
-    public boolean delete(I id) {
+    public boolean delete(ID id) {
 
         try {
             return dao.deleteById(id) == 1;
@@ -93,6 +91,10 @@ public class BaseCrudRepository<T, I> {
 
         return false;
 
+    }
+
+    public Dao<T, ID> getDao() {
+        return this.dao;
     }
     
 }

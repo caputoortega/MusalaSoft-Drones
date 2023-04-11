@@ -1,9 +1,14 @@
 package ar.com.caputo.drones;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 
+import ar.com.caputo.drones.rest.DroneEndpoint;
 import spark.Spark;
 
 public class DroneService {
@@ -18,6 +23,8 @@ public class DroneService {
 
     public static final Gson GSON = new Gson(); 
     private ConnectionSource source;
+
+    private ScheduledExecutorService scheduler;
     
     private static DroneService instance;
     private DroneService() {}
@@ -79,18 +86,37 @@ public class DroneService {
         /*
          * Forces every response to be encoded in JSON
          */
-        Spark.defaultResponseTransformer((model) -> {
-            if(model == null) return "";
-            return DroneService.GSON.toJson(model);
+        Spark.defaultResponseTransformer((response) -> {
+            if(response == null) return "{}";
+            return GSON.toJson(JsonParser.parseString(response.toString()));
+        });
+
+        Spark.before((req, resp) -> { 
+            resp.type("application/json");
         });
 
         /*
          * Endpoint registration
          */
 
-        // new DroneEndpoint();
+        new DroneEndpoint();
         // new MedicationEndpoint();
         
+
+        /*
+         * Init tasks
+         */
+
+/*         BatteryLevelLogTask batteryTask = new BatteryLevelLogTask();
+        batteryTask.init();
+
+        // Ensuring the logging task gets shutdown properly
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            
+            batteryTask.shutdown();
+            getScheduler().shutdown();
+
+        })); */
     
     }
 
@@ -109,6 +135,27 @@ public class DroneService {
 
         }
         return this.source;
+    }
+
+
+    /**
+     * Sanitises a String to be JSON-format-parsable
+     * @param string
+     * @return sanitised string
+     */
+    public static String sanitise(String string) {
+
+        return string.strip()
+                .replace("\"", "\\\"")
+                .replace("\n", " ")
+                .replace("\'", "\\\'");
+
+    } 
+
+    public ScheduledExecutorService getScheduler() {
+        if(this.scheduler == null)
+            this.scheduler = Executors.newScheduledThreadPool(1);
+        return this.scheduler;
     }
 
 }
