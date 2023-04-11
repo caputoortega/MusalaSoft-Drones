@@ -7,7 +7,7 @@ import ar.com.caputo.drones.database.repo.BaseCrudRepository;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnimplementedEndpointException;
 
-public class RestfulEndpoint<T> {
+public abstract class RestfulEndpoint<T> {
     
     public final String BASE_ENDPOINT;
     protected final BaseCrudRepository<T,String> repository;
@@ -49,22 +49,10 @@ public class RestfulEndpoint<T> {
         });
     }
 
-    public void addObject() {
+    public abstract void addObject();
 
-       throw new UnimplementedEndpointException("POST", BASE_ENDPOINT + "/add");
+    public abstract void updateObject();
 
-    }
-
-    public void updateObject() {
-        
-       throw new UnimplementedEndpointException("PUT", BASE_ENDPOINT + "/:id/update");
-
-    }
-
-    public void deleteObject() {
-        
-       throw new UnimplementedEndpointException("DELETE", BASE_ENDPOINT + "/:id/delete");
-       
-    }
+    public abstract void deleteObject();
 
 }
