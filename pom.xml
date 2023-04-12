@@ -89,7 +89,6 @@
   </dependencies>
 
   <build>
-    <pluginManagement>
       <plugins>
 
       <plugin>
@@ -132,14 +131,38 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
+        <version>3.3.0</version>
         <executions>
             <execution>
+                <id>create-shaded-jar</id>
                 <phase>package</phase>
                 <goals>
-                  <goal>single</goal>
+                  <goal>shade</goal>
                 </goals>
                 <configuration>
-                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                    <shadedArtifactAttached>false</shadedArtifactAttached>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+
+                    <!-- Include all dependencies into the compiled artifact -->
+                    <artifactSet>
+                      <includes>
+                        <include>*:*</include>
+                      </includes>
+                    </artifactSet>
+
+                    <!-- Exclude all unnecesary files from shaded jars -->
+                    <filters>
+                      <filter>
+                        <artifact>*:*</artifact>
+                        <excludes>
+                          <exclude>*.html</exclude>
+                          <exclude>META-INF/*.SF</exclude>
+                          <exclude>META-INF/*.DSA</exclude>
+                          <exclude>META-INF/*.RSA</exclude>
+                        </excludes>
+                      </filter>
+                    </filters>
+
                     <transformers>
                         <transformer implementation=
                           "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -150,8 +173,10 @@
             </execution>
         </executions>
         </plugin>
-
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.0</version>
+        </plugin>
       </plugins>
-    </pluginManagement>
   </build>
 </project>
