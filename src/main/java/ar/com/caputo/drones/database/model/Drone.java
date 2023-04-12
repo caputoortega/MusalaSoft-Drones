@@ -83,10 +83,19 @@ public class Drone extends BaseEntityModel {
      * stores it in the {@code serialNumber} attribute 
      * @param serialNumber
      */
-    public void setSerialNumber(String serialNumber) {
+    public void setSerialNumber(String serialNumber) throws InvalidInputFormatException {
 
-        // Making sure the serialNumber doesn't contain
-        // more than 100 chars
+        /*
+         * Making sure the serialNumber is not "available", so it
+         * does not collide with the "/api/version/drones/available"
+         * endpoint
+         */
+        if(serialNumber.equals("available")) throw new InvalidInputFormatException(serialNumber, "any string except \"available\"");
+        
+        /*
+          * Making sure the serialNumber doesn't contain more than
+          * 100 characters
+        */
         if(serialNumber.length() > 100) serialNumber = serialNumber.substring(0, 100);
         
         this.serialNumber = serialNumber;

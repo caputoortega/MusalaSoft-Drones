@@ -11,6 +11,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
 import ar.com.caputo.drones.DroneService;
+import ar.com.caputo.drones.database.model.Drone;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
@@ -69,6 +70,11 @@ public class BaseCrudRepository<T, ID> {
 
     }
 
+
+    public List<?> addNewBulk(List<T> bulk) throws SQLException {
+        return List.of(dao.create(bulk), bulk);
+    }
+
     public boolean update(T model) {
 
         try {
@@ -96,5 +102,6 @@ public class BaseCrudRepository<T, ID> {
     public Dao<T, ID> getDao() {
         return this.dao;
     }
+
     
 }

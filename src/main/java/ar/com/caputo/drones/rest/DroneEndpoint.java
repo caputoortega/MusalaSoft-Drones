@@ -8,16 +8,14 @@ import static spark.Spark.patch;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.naming.directory.NoSuchAttributeException;
-
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.model.Drone;
 import ar.com.caputo.drones.database.repo.DroneRepository;
@@ -34,6 +32,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     protected void register() {
         super.register();
+        bulkAdd();
         getAvailableDrones();
         getBatteryLevel();
         contents();
@@ -46,7 +45,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
      */
     public void getAvailableDrones() {
 
-        get(BASE_ENDPOINT + "/available/", (req, resp) -> {
+        get(BASE_ENDPOINT + "/available", (req, resp) -> {
 
             return buildResponse(repository.getDao().queryForEq("state", Drone.State.IDLE).stream()
                     .filter(drone -> drone.getBatteryLevel() >= 25).collect(Collectors.toList()));
@@ -74,6 +73,21 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     }
 
+    private final boolean isValidDronePayload(JsonObject payload) {
+        return payload.entrySet().stream()
+        .map((entry) -> entry.getKey())
+        .collect(Collectors.toUnmodifiableList())
+        .containsAll(Arrays.asList(
+            new String[] {
+                "serialNumber",
+                "model",
+                "state", 
+                "weightLimit",
+                "batteryLevel"
+             }));
+
+    } 
+
     @Override
     public void addObject() {
 
@@ -85,19 +99,8 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
                Checking whether the request body contains all required
                params to create a new Drone
             */
-            boolean isValidRequest = requestBody.entrySet().stream()
-                                        .map((entry) -> entry.getKey())
-                                        .collect(Collectors.toUnmodifiableList())
-                                        .containsAll(Arrays.asList(
-                                            new String[] {
-                                                "serialNumber",
-                                                "model",
-                                                "state", 
-                                                "weightLimit",
-                                                "batteryLevel"
-                                             }));
-
-            if(!isValidRequest) {
+           
+            if(!isValidDronePayload(requestBody.getAsJsonObject("bulk"))) {
 
                 resp.status(400);
                 return null;
@@ -129,6 +132,63 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
                 
                 return buildResponse(ex.getMessage()); //this was sanitised before
             }
+
+        });
+
+    }
+
+    /**
+     * This endpoint is an everything-or-none endpoint,
+     * if any error is present on the payload, the entire
+     * bulk is rejected. 
+     */
+    public void bulkAdd() {
+
+        post(BASE_ENDPOINT + "/bulk", "application/json", (req, resp) -> {
+
+            JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class); 
+            JsonArray bulkData = requestBody.get("bulk").getAsJsonArray();
+            List<Drone> dronesToCreate = new ArrayList<>();
+
+            try { 
+            bulkData.forEach((jsonDrone) -> {
+
+                JsonObject toBuild = DroneService.GSON.fromJson(jsonDrone, JsonObject.class);                
+                if(isValidDronePayload(toBuild)) {
+
+                    try {
+                        dronesToCreate.add(new Drone(
+                            toBuild.get("serialNumber").getAsString(),
+                            toBuild.get("model").getAsString(),
+                            toBuild.get("state").getAsString(),
+                            toBuild.get("weightLimit").getAsInt(),
+                            toBuild.get("batteryLevel").getAsInt()
+                        ));
+                    } catch (InvalidInputFormatException | IllegalArgumentException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                }
+
+            });
+
+        } catch(RuntimeException e) {
+            if(e.getCause() instanceof InvalidInputFormatException) {
+                resp.status(400);
+                return buildResponse(e.getCause().getMessage());
+            }
+            resp.status(500);
+            e.printStackTrace();
+            return buildResponse(e.getMessage());
+        }
+
+        try {
+            List<?> bulkAddResult = repository.addNewBulk(dronesToCreate);
+            return buildBulkResponse((int) bulkAddResult.get(0), (List<?>) bulkAddResult.get(1));
+        } catch (SQLException ex) {
+            resp.status(422);
+            return buildResponse(ex.getCause().getMessage());
+        }
 
         });
 

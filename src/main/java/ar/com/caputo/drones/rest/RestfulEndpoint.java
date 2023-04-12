@@ -56,8 +56,12 @@ public abstract class RestfulEndpoint<T> {
 
     public abstract void deleteObject();
 
-    protected final String buildResponse(Object result) {
-        return DroneService.GSON.toJson(Map.of("data", result));
+    protected final String buildResponse(Object data) {
+        return DroneService.GSON.toJson(Map.of("data", data));
+    }
+
+    protected final String buildBulkResponse(int bulkSize, Object data) {
+        return DroneService.GSON.toJson(Map.of("bulkSize", bulkSize, "data", data));
     }
 
 }
