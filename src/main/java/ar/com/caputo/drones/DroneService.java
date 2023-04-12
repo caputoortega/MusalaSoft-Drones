@@ -73,16 +73,15 @@ public class DroneService {
     
     }
 
-    private void configure(final String API_ADDRESS, final int API_PORT, String USER_PROVIDED_DB_NAME) {
+    private void configure(final String API_ADDRESS, final int API_PORT, final String USER_PROVIDED_DB_NAME) {
 
-        USER_PROVIDED_DB_NAME = USER_PROVIDED_DB_NAME.strip();
-
-        System.out.println("user db is " + USER_PROVIDED_DB_NAME);
+        String dbName = null; 
+        if(USER_PROVIDED_DB_NAME != null) dbName = USER_PROVIDED_DB_NAME.strip();
 
         this.DB_NAME =
-                (USER_PROVIDED_DB_NAME == null || USER_PROVIDED_DB_NAME.isEmpty() || USER_PROVIDED_DB_NAME.equals(this.DB_NAME))
+                (dbName == null || dbName.isEmpty() || dbName.equals(this.DB_NAME))
                 ? this.DB_NAME
-                : USER_PROVIDED_DB_NAME;
+                : dbName;
 
         /*
          * Spark configuration
