@@ -100,7 +100,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
                params to create a new Drone
             */
            
-            if(!isValidDronePayload(requestBody.getAsJsonObject("bulk"))) {
+            if(!isValidDronePayload(requestBody)) {
 
                 resp.status(400);
                 return null;
