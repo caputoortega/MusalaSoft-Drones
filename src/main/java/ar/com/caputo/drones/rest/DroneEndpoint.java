@@ -9,13 +9,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.naming.directory.NoSuchAttributeException;
+
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.model.Drone;
 import ar.com.caputo.drones.database.repo.DroneRepository;
+import ar.com.caputo.drones.exception.InvalidInputFormatException;
 import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
@@ -42,8 +48,8 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
         get(BASE_ENDPOINT + "/available/", (req, resp) -> {
 
-            return repository.getDao().queryForEq("state", Drone.State.IDLE).stream()
-                    .filter(drone -> drone.getBatteryLevel() >= 25).collect(Collectors.toList());
+            return buildResponse(repository.getDao().queryForEq("state", Drone.State.IDLE).stream()
+                    .filter(drone -> drone.getBatteryLevel() >= 25).collect(Collectors.toList()));
 
         });
 
@@ -62,7 +68,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
                 return null;
             }
 
-            return "{\"batteryLevel\":" + requestedDrone.getBatteryLevel() + "}" ;
+            return buildResponse(requestedDrone.getBatteryLevel());
 
         });
 
@@ -98,23 +104,30 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
             }
 
-            Drone toCreate = new Drone(
-                requestBody.get("serialNumber").getAsString(),
-                requestBody.get("model").getAsString(),
-                requestBody.get("state").getAsString(),
-                requestBody.get("weightLimit").getAsInt(),
-                requestBody.get("batteryLevel").getAsInt()                
-            );           
+            Drone toCreate;
+            try { 
+                toCreate = new Drone(
+                    requestBody.get("serialNumber").getAsString(),
+                    requestBody.get("model").getAsString(),
+                    requestBody.get("state").getAsString(),
+                    requestBody.get("weightLimit").getAsInt(),
+                    requestBody.get("batteryLevel").getAsInt()                
+                );           
+            } catch(IllegalArgumentException | InvalidInputFormatException ex) {
+                resp.status(400);
+                return buildResponse(ex.getMessage());
+            }
 
             try { 
                 
+                resp.status(201);
                 repository.addNew(toCreate); 
-                return toCreate;
+                return buildResponse(toCreate);
 
             } catch(UnmetConditionsException ex) {
                 resp.status(400);
                 
-                return "{ \"result\": \"" + DroneService.sanitise(ex.getMessage()) + "\" }";
+                return buildResponse(ex.getMessage()); //this was sanitised before
             }
 
         });
@@ -143,10 +156,10 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             */
             if(toDelete.getState() != Drone.State.IDLE) {
                 resp.status(409);
-                return "{\"result\": \"Cannot delete drone while not IDLE\"}";
+                return buildResponse("Cannot delete drone while not IDLE");
             }
     
-            return "{\"result\":" + this.repository.delete(toDelete.getSerialNumber()) + "}";
+            return buildResponse(repository.delete(toDelete.getSerialNumber()));
 
         });
 
@@ -168,53 +181,62 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             }
 
             try {
-            requestBody.entrySet().stream()
-            .map((entry) -> entry.getKey())
-            .collect(Collectors.toUnmodifiableList()).forEach(attribute -> {
 
-                // We do not update the item collection from this endpoint
-                if(attribute.equalsIgnoreCase("items")) return;
+                requestBody.entrySet().stream()
+                .map((entry) -> entry.getKey())
+                .collect(Collectors.toUnmodifiableList()).forEach(attribute -> {
 
-                String capitalisedAttribute = attribute.substring(0, 1).toUpperCase()
-                        + attribute.substring(1, attribute.length());
+                    // We do not update the item collection from this endpoint
+                    if(attribute.equalsIgnoreCase("items")) return;
 
-                try {
+                    String capitalisedAttribute = attribute.substring(0, 1).toUpperCase()
+                            + attribute.substring(1, attribute.length());
 
-                    Class<?> attributeFieldClass = Drone.class.getDeclaredField(attribute).getType();
 
-                    // Getting the PUBLIC setter method for the given attribute
-                    Method toUpdateMethod = Drone.class.getMethod("set" + capitalisedAttribute,
-                            attributeFieldClass.isEnum() ? String.class : attributeFieldClass);
-                    // Setters only have a single param
-                    Type paramType = toUpdateMethod.getGenericParameterTypes()[0];
+                        Class<?> attributeFieldClass;
+                        Method toUpdateGetterMethod;
+                        try {
 
-                    /*
-                     * For this specific implementation it is safe
-                     * to asume that if the argument is not an integer
-                     * then we can safely treat it as a String
-                     */
-                    if(paramType.getTypeName().equals("int"))
-                         toUpdateMethod.invoke(toUpdate, requestBody.get(attribute).getAsInt());
-                    else toUpdateMethod.invoke(toUpdate, requestBody.get(attribute).getAsString());
-                    
-                } catch (InvocationTargetException ex) {
-                    throw new UnmetConditionsException(ex.getTargetException().getMessage());
-                } catch (Exception ex) {
-                    throw new RequestProcessingException(ex.toString());
-                } 
+                            attributeFieldClass = Drone.class.getDeclaredField(attribute).getType();
+
+                            // Getting the PUBLIC setter method for the given attribute
+                            toUpdateGetterMethod = Drone.class.getMethod("set" + capitalisedAttribute,
+                                        attributeFieldClass.isEnum() ? String.class : attributeFieldClass);
+
+                        } catch(NoSuchFieldException | NoSuchMethodException noSuchEx) {
+                            throw new UnmetConditionsException(attribute + " does not exist");
+                        }
+    
+                        // Setters only have a single param
+                        Type paramType = toUpdateGetterMethod.getGenericParameterTypes()[0];
+
+                        try { 
+                            /*
+                            * For this specific implementation it is safe
+                            * to asume that if the argument is not an integer
+                            * then we can safely treat it as a String
+                            */
+                            if(paramType.getTypeName().equals("int"))
+                                toUpdateGetterMethod.invoke(toUpdate, requestBody.get(attribute).getAsInt());
+                            else toUpdateGetterMethod.invoke(toUpdate, requestBody.get(attribute).getAsString());
+                        } catch(IllegalArgumentException ex) {
+                            throw new UnmetConditionsException(ex.getCause().getMessage());
+                        } catch (IllegalAccessException | InvocationTargetException ex) {
+                            throw new RequestProcessingException(ex.getMessage());
+                        }
             
             });
 
             } catch (UnmetConditionsException ex) {
                 resp.status(400);
-                return "{ \"result\": \"" + DroneService.sanitise(ex.getMessage()) + "\" }";
+                return buildResponse(ex.getMessage()); // this was sanitised
             } catch (RequestProcessingException ex) {
                 resp.status(500);
-                return "{ \"result\": \"" + DroneService.sanitise(ex.getMessage()) + "\" }";
+                return buildResponse(ex.getMessage()); // this was sanitised
             }
 
             repository.update(toUpdate);
-            return toUpdate;
+            return buildResponse(toUpdate);
 
         });
 

@@ -1,5 +1,7 @@
 package ar.com.caputo.drones.database.model;
 
+import java.util.Objects;
+
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 
@@ -85,7 +87,9 @@ public class Drone extends BaseEntityModel {
 
         // Making sure the serialNumber doesn't contain
         // more than 100 chars
-        this.serialNumber = serialNumber.substring(0, 100);
+        if(serialNumber.length() > 100) serialNumber = serialNumber.substring(0, 100);
+        
+        this.serialNumber = serialNumber;
 
     }
 
@@ -153,6 +157,23 @@ public class Drone extends BaseEntityModel {
 
     public Model getModel() {
         return this.model;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Drone drone = (Drone) o;
+        return weightLimit == drone.weightLimit &&
+                batteryLevel == drone.batteryLevel &&
+                serialNumber.equals(drone.serialNumber) &&
+                model == drone.model &&
+                state == drone.state;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(serialNumber, model, state, weightLimit, batteryLevel);
     }
 
 }

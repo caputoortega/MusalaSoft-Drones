@@ -2,10 +2,11 @@ package ar.com.caputo.drones.rest;
 
 import static spark.Spark.get;
 
+import java.util.Map;
+
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.repo.BaseCrudRepository;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
-import ar.com.caputo.drones.exception.UnimplementedEndpointException;
 
 public abstract class RestfulEndpoint<T> {
     
@@ -54,5 +55,9 @@ public abstract class RestfulEndpoint<T> {
     public abstract void updateObject();
 
     public abstract void deleteObject();
+
+    protected final String buildResponse(Object result) {
+        return DroneService.GSON.toJson(Map.of("data", result));
+    }
 
 }

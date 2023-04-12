@@ -9,6 +9,7 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 
 import ar.com.caputo.drones.rest.DroneEndpoint;
+import ar.com.caputo.drones.rest.MedicationEndpoint;
 import spark.Spark;
 
 public class DroneService {
@@ -16,7 +17,7 @@ public class DroneService {
     private final int FALLBACK_API_PORT = 8080;
     private final String FALLBACK_API_ADDRESS = "0.0.0.0";
     private String DB_NAME = "drones";
-    private final String DB_URL = "jdbc:h2:file://" + System.getProperty("user.dir") + "/" + DB_NAME;
+    private final String DB_URL = "jdbc:h2:file://" + System.getProperty("user.dir") + "/";
 
     private final String API_VERSION = "v1";
     public final String API_URL = String.format("/api/%s", API_VERSION);
@@ -66,14 +67,20 @@ public class DroneService {
             
         }
 
+        System.out.println("dbName is " + dbName);
+
         DroneService.getInstance().configure(apiAddress, apiPort, dbName);
     
     }
 
-    private void configure(final String API_ADDRESS, final int API_PORT, final String USER_PROVIDED_DB_NAME) {
+    private void configure(final String API_ADDRESS, final int API_PORT, String USER_PROVIDED_DB_NAME) {
+
+        USER_PROVIDED_DB_NAME = USER_PROVIDED_DB_NAME.strip();
+
+        System.out.println("user db is " + USER_PROVIDED_DB_NAME);
 
         this.DB_NAME =
-                (USER_PROVIDED_DB_NAME == null || USER_PROVIDED_DB_NAME.equals(this.DB_NAME))
+                (USER_PROVIDED_DB_NAME == null || USER_PROVIDED_DB_NAME.isEmpty() || USER_PROVIDED_DB_NAME.equals(this.DB_NAME))
                 ? this.DB_NAME
                 : USER_PROVIDED_DB_NAME;
 
@@ -100,7 +107,7 @@ public class DroneService {
          */
 
         new DroneEndpoint();
-        // new MedicationEndpoint();
+        //new MedicationEndpoint();
         
 
         /*
@@ -123,7 +130,7 @@ public class DroneService {
     public ConnectionSource getDataSource() {
         if(this.source == null) {
 
-            try(ConnectionSource source = new JdbcConnectionSource(DB_URL)) {
+            try(ConnectionSource source = new JdbcConnectionSource(DB_URL + DB_NAME)) {
 
                 ((JdbcConnectionSource) source).setUsername("sa");
                 ((JdbcConnectionSource) source).setPassword("");
