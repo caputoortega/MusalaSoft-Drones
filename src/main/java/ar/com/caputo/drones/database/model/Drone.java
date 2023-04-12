@@ -2,8 +2,10 @@ package ar.com.caputo.drones.database.model;
 
 import java.util.Objects;
 
+import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
 
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
@@ -55,6 +57,9 @@ public class Drone extends BaseEntityModel {
     
     @DatabaseField(canBeNull = false, defaultValue = "0", useGetSet = true)
     private int batteryLevel;
+
+    @ForeignCollectionField(foreignFieldName = "associatedDrone")
+    private ForeignCollection<Medication> load;
 
     /**
      * Empty constructor required for ORMLite reflection-based mapping

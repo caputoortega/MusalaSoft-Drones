@@ -1,13 +1,17 @@
 package ar.com.caputo.drones.database.model;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.regex.Pattern;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.Imaging;
 
-import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
+import ar.com.caputo.drones.exception.ResourceNotFoundException;
 
 public class Medication extends BaseEntityModel {
 
@@ -40,13 +44,24 @@ public class Medication extends BaseEntityModel {
     @DatabaseField(canBeNull = false)
     private int weight;
 
-    @DatabaseField(canBeNull = true, useGetSet = true, dataType = DataType.STRING_BYTES)
-    private String medicationCaseImage;
+    @DatabaseField(canBeNull = true, useGetSet = true)
+    private String medicationCaseImageUrl;
+
+    @DatabaseField(foreign = true, canBeNull = true)
+    private Drone associatedDrone;
     
     /**
      * Empty constructor required for ORMLite reflection-based mapping
      */
     public Medication() {}
+
+    public Medication(String code, String name, int weight) throws InvalidInputFormatException {
+
+        setCode(code);
+        setName(name);
+        setWeight(weight);
+
+    }
 
     public String getCode() {
         return code;
@@ -92,27 +107,44 @@ public class Medication extends BaseEntityModel {
     }
 
     /**
-     * @return Base64 string of the medication box image
+     * @return Medication box image URL
      */
-    public String getMedicationCaseImage() {
-        return this.medicationCaseImage;
+    public String getMedicationCaseImageUrl() {
+        return this.medicationCaseImageUrl;
     }
 
 
     /**
-     * Checks whether the string is a valid Base64 string
-     * and updates the {@code medicationCaseImage} attribute
-     * If the string is not a valid Base64 it throws an
-     * {@link InvalidInputFormatException} 
+     * Checks whether the resource on the provided URl is a
+     * valid JPEG, PNG or GIF image and updates the {@code medicationCaseImage}
+     * attribute.
+     * If the resource is not valid throws an {@link InvalidInputFormatException},
+     * if the resource is not found or is unreadable throws a
+     * {@link ResourceNotFoundException}
      * @param base64String
      * @throws InvalidInputFormatException
      */
-    public void setMedicationCaseImage(String base64String) throws InvalidInputFormatException {
+    public void setMedicationCaseImageUrl(String imageUrl) throws InvalidInputFormatException, ResourceNotFoundException {
 
-        if(Base64.isBase64(base64String))
-            this.medicationCaseImage = base64String;
-        else throw new InvalidInputFormatException(base64String, "Base64");
+        try {
+            URL url = new URL(imageUrl);
+            InputStream in = url.openStream();
+            String imageFormat =  Imaging.getImageInfo(in, null).getFormatName();
+            if(imageFormat.equals("JPEG") || imageFormat.equals("PNG") || imageFormat.equals("GIF")) 
+                this.medicationCaseImageUrl = imageUrl;
+            else throw new InvalidInputFormatException(imageUrl, "JPEG, PNG, GIF");
+        } catch (IOException | ImageReadException ex) {
+            throw new ResourceNotFoundException(imageUrl);
+        }
 
+    }
+
+    public int getWeight() {
+        return this.weight;
+    }
+
+    public void setWeight(int weight) {
+        this.weight = weight;
     }
 
     

@@ -10,5 +10,8 @@ public class ResourceNotFoundException extends Exception {
         super(String.format("Could not find %s of ID %s", objectType.getSimpleName(), id));
     }
 
+    public ResourceNotFoundException(String resourceUrl) {
+        super("Could not find requested resource on " + resourceUrl);
+    }
 
 }

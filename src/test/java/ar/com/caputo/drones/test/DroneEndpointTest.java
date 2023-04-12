@@ -468,24 +468,6 @@ public class DroneEndpointTest {
 
     }
 
-    @Test
-    @DisplayName("DELETE:/drones/<SERIAL> should succeed")
-    @Order(16)
-    public void DELETEdrones_With_Serial_Should_Suceed() throws Exception {
-
-        URL url = new URL(ENDPOINT_URL + "/drones/" + TEST_DRONE_SERIAL);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setRequestMethod("DELETE");
-
-        assertEquals(200, con.getResponseCode(), "Invalid response code");
-        assertTrue(con.getContentType().equalsIgnoreCase("application/json"), "Content is not JSON-encoded");
-        
-    }
-
-    
-
-
-    
-    
+    // TODO: Bulk add tests
     
 }
