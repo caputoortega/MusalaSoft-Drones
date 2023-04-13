@@ -309,7 +309,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
     public void contents() {
 
         get(BASE_ENDPOINT + "/:id/items", (req, resp) -> {
-            return null;
+            return buildResponse(repository.get(req.params(":id")).getLoad());
         });
 
     }

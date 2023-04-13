@@ -1,5 +1,8 @@
 package ar.com.caputo.drones.database.model;
 
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 import com.j256.ormlite.dao.ForeignCollection;
@@ -59,7 +62,7 @@ public class Drone extends BaseEntityModel {
     private int batteryLevel;
 
     @ForeignCollectionField(foreignFieldName = "associatedDrone", eager = false)
-    private ForeignCollection<Medication> load;
+    private transient ForeignCollection<Medication> load;
 
     /**
      * Empty constructor required for ORMLite reflection-based mapping
@@ -188,6 +191,10 @@ public class Drone extends BaseEntityModel {
     @Override
     public int hashCode() {
         return Objects.hash(serialNumber, model, state, weightLimit, batteryLevel);
+    }
+
+    public ForeignCollection<Medication> getLoad() throws SQLException {
+        return this.load;
     }
 
 }
