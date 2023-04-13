@@ -18,12 +18,12 @@ public class Medication extends BaseEntityModel {
     /**
      * Only uppercased letters, numbers and underscore
      */
-    private final String CODE_REGEX = "/[A-Z0-9_]/g";
+    private transient final String CODE_REGEX = "[A-Z0-9_]+";
     /**
      * Only letters (upper and lower case), numbers,
      * hyphen or underscore
      */
-    private final String NAME_REGEX = "/[A-Za-z0-9-_]/g";
+    private transient final String NAME_REGEX = "[A-Za-z0-9-_]+";
 
     /**
      * {@code code} attribute is being forced to be updated
@@ -47,8 +47,8 @@ public class Medication extends BaseEntityModel {
     @DatabaseField(canBeNull = true, useGetSet = true)
     private String medicationCaseImageUrl;
 
-    @DatabaseField(foreign = true, canBeNull = true)
-    private Drone associatedDrone;
+    @DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true)
+    private transient Drone associatedDrone;
     
     /**
      * Empty constructor required for ORMLite reflection-based mapping
@@ -126,6 +126,7 @@ public class Medication extends BaseEntityModel {
      */
     public void setMedicationCaseImageUrl(String imageUrl) throws InvalidInputFormatException, ResourceNotFoundException {
 
+        if(imageUrl == null || imageUrl.strip().isEmpty()) return;
         try {
             URL url = new URL(imageUrl);
             InputStream in = url.openStream();
@@ -146,6 +147,16 @@ public class Medication extends BaseEntityModel {
     public void setWeight(int weight) {
         this.weight = weight;
     }
+
+    public Drone getAssociatedDrone() {
+        return associatedDrone;
+    }
+
+    public void setAssociatedDrone(Drone associatedDrone) {
+        this.associatedDrone = associatedDrone;
+    }
+
+    
 
     
 }
