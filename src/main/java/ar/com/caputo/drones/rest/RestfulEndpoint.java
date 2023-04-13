@@ -32,7 +32,7 @@ public abstract class RestfulEndpoint<T> {
     public void baseGet() {
         get(BASE_ENDPOINT, (req, resp) -> {
             
-            return repository.listAll();
+            return buildResponse(repository.listAll());
         
         });
     }
@@ -42,7 +42,7 @@ public abstract class RestfulEndpoint<T> {
         get(BASE_ENDPOINT + "/:id", (req, resp) -> {
 
             try {
-                return repository.get(req.params(":id"));
+                return buildResponse(repository.get(req.params(":id")));
             } catch (ResourceNotFoundException ex) {
                 resp.status(404);
                 return null;
