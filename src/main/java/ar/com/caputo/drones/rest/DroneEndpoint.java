@@ -19,6 +19,7 @@ import com.google.gson.JsonObject;
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.model.Drone;
 import ar.com.caputo.drones.database.repo.DroneRepository;
+import ar.com.caputo.drones.exception.InvalidBulkItemException;
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
 import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
@@ -168,12 +169,15 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
                         throw new RuntimeException(e);
                     }
 
+                } else {
+                    throw new RuntimeException(new InvalidBulkItemException(bulkData.toString()));
                 }
 
             });
 
         } catch(RuntimeException e) {
-            if(e.getCause() instanceof InvalidInputFormatException) {
+            if(e.getCause() instanceof InvalidInputFormatException ||
+               e.getCause() instanceof InvalidBulkItemException) {
                 resp.status(400);
                 return buildResponse(e.getCause().getMessage());
             }

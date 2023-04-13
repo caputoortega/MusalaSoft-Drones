@@ -106,7 +106,7 @@ public class DroneService {
          */
 
         new DroneEndpoint();
-        //new MedicationEndpoint();
+        new MedicationEndpoint();
         
 
         /*

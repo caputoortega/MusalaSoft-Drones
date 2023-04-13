@@ -1,16 +1,15 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "DroneService Test",
+            "name": "DroneService (Production)",
             "type": "java",
             "request": "launch",
             "mainClass": "ar.com.caputo.drones.DroneService",
             "projectName": "drones",
-            "args": ["-p:8080"]
-        },
+            "args": [
+                "-p:8080"
+            ]
+        }
     ]
 }

@@ -58,7 +58,7 @@ public class Drone extends BaseEntityModel {
     @DatabaseField(canBeNull = false, defaultValue = "0", useGetSet = true)
     private int batteryLevel;
 
-    @ForeignCollectionField(foreignFieldName = "associatedDrone")
+    @ForeignCollectionField(foreignFieldName = "associatedDrone", eager = false)
     private ForeignCollection<Medication> load;
 
     /**
