@@ -13,6 +13,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -469,5 +470,99 @@ public class DroneEndpointTest {
     }
 
     // TODO: Bulk add tests
+    @Test
+    @DisplayName("POST:/drones/bulk should fail registering drones due to incomplete payload")
+    @Order(16)
+    public void POSTdrones_Bulk_Should_Fail_Registering_With_Incomplete_Payload() throws Exception {
+        
+        
+        URL url = new URL(ENDPOINT_URL + "/drones/bulk");
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+
+        Map<String, List<Map<String, Object>>> payload = new HashMap<>();
+
+        payload.put("bulk",
+            List.of(
+                Map.of("serialNumber", UUID.randomUUID().toString(),
+                            "model", "LIGHTWEIGHT",
+                            "state", "LOADING",
+                            "weightLimit", 400,
+                            "batteryLevel", 43),
+                Map.of("serialNumber", UUID.randomUUID().toString(), 
+                            "model", "LIGHTWEIGHT",
+                            "state", "LOADING",
+                            "batteryLevel", 43) // Missing weightLimit
+            )
+        );
+
+        con.setDoOutput(true);
+        DataOutputStream out = new DataOutputStream(con.getOutputStream());
+        out.write(DroneService.GSON.toJson(payload).getBytes());
+        out.flush();
+        out.close();
+
+        assertEquals(400, con.getResponseCode(), "Invalid response code");
+        assertTrue(con.getContentType().equalsIgnoreCase("application/json"), "Content is not JSON-encoded on update check!");
+
+
+    }
+
+    @Test
+    @DisplayName("POST:/drones/bulk should register three new drones")
+    @Order(17)
+    public void POSTdrones_Bulk_Should_Register_Three_New_Drones() throws Exception {
+        
+        
+        URL url = new URL(ENDPOINT_URL + "/drones/bulk");
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+
+        Map<String, List<Map<String, Object>>> payload = new HashMap<>();
+
+        payload.put("bulk",
+            List.of(
+                Map.of("serialNumber", UUID.randomUUID().toString(),
+                            "model", "LIGHTWEIGHT",
+                            "state", "LOADING",
+                            "weightLimit", 400,
+                            "batteryLevel", 43),
+                Map.of("serialNumber", UUID.randomUUID().toString(), 
+                            "model", "LIGHTWEIGHT",
+                            "state", "IDLE",
+                            "weightLimit", 473,
+                            "batteryLevel", 43),
+                Map.of("serialNumber", UUID.randomUUID().toString(), 
+                        "model", "CRUISERWEIGHT",
+                        "state", "IDLE",
+                        "weightLimit", 320,
+                        "batteryLevel",22)
+            )
+        );
+
+        con.setDoOutput(true);
+        DataOutputStream out = new DataOutputStream(con.getOutputStream());
+        out.write(DroneService.GSON.toJson(payload).getBytes());
+        out.flush();
+        out.close();
+
+        assertEquals(200, con.getResponseCode(), "Invalid response code");
+        assertTrue(con.getContentType().equalsIgnoreCase("application/json"), "Content is not JSON-encoded on update check!");
+
+        InputStream in = con.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        String line;
+        StringBuilder responseBuilder = new StringBuilder();
+        while((line = reader.readLine()) != null) {
+            responseBuilder.append(line);
+        }
+
+        JsonObject response = DroneService.GSON.fromJson(responseBuilder.toString(), JsonObject.class);
+
+        assertEquals(3, response.get("bulkSize").getAsInt(), "Invalid registration bulk count");;
+
+    }
     
 }
