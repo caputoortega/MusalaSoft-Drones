@@ -3,11 +3,6 @@ package ar.com.caputo.drones.rest;
 import static spark.Spark.get;
 import static spark.Spark.post;
 import static spark.Spark.delete;
-import static spark.Spark.patch;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +16,6 @@ import ar.com.caputo.drones.database.model.Drone;
 import ar.com.caputo.drones.database.repo.DroneRepository;
 import ar.com.caputo.drones.exception.InvalidBulkItemException;
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
-import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
@@ -215,81 +209,6 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             }
     
             return buildResponse(repository.delete(toDelete.getSerialNumber()));
-
-        });
-
-    }
-
-    @Override
-    public void updateObject() {
-
-        patch(BASE_ENDPOINT + "/:id", (req, resp) -> {
-
-            JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
-
-            Drone toUpdate;
-            
-            try {
-                toUpdate = repository.get(req.params(":id"));
-        
-                requestBody.entrySet().stream()
-                .map((entry) -> entry.getKey())
-                .collect(Collectors.toUnmodifiableList()).forEach(attribute -> {
-
-                    // We do not update the item collection from this endpoint
-                    if(attribute.equalsIgnoreCase("items")) return;
-
-                    String capitalisedAttribute = attribute.substring(0, 1).toUpperCase()
-                            + attribute.substring(1, attribute.length());
-
-
-                        Class<?> attributeFieldClass;
-                        Method toUpdateGetterMethod;
-                        try {
-
-                            attributeFieldClass = Drone.class.getDeclaredField(attribute).getType();
-
-                            // Getting the PUBLIC setter method for the given attribute
-                            toUpdateGetterMethod = Drone.class.getMethod("set" + capitalisedAttribute,
-                                        attributeFieldClass.isEnum() ? String.class : attributeFieldClass);
-
-                        } catch(NoSuchFieldException | NoSuchMethodException noSuchEx) {
-                            throw new UnmetConditionsException(attribute + " does not exist");
-                        }
-    
-                        // Setters only have a single param
-                        Type paramType = toUpdateGetterMethod.getGenericParameterTypes()[0];
-
-                        try { 
-                            /*
-                            * For this specific implementation it is safe
-                            * to asume that if the argument is not an integer
-                            * then we can safely treat it as a String
-                            */
-                            if(paramType.getTypeName().equals("int"))
-                                toUpdateGetterMethod.invoke(toUpdate, requestBody.get(attribute).getAsInt());
-                            else toUpdateGetterMethod.invoke(toUpdate, requestBody.get(attribute).getAsString());
-                        } catch(IllegalArgumentException ex) {
-                            throw new UnmetConditionsException(ex.getCause().getMessage());
-                        } catch (IllegalAccessException | InvocationTargetException ex) {
-                            throw new RequestProcessingException(ex.getMessage());
-                        }
-            
-            });
-
-            } catch (ResourceNotFoundException ex) {
-                resp.status(404);
-                return null;
-            } catch (UnmetConditionsException ex) {
-                resp.status(400);
-                return buildResponse(ex.getMessage()); // this was sanitised
-            } catch (RequestProcessingException ex) {
-                resp.status(500);
-                return buildResponse(ex.getMessage()); // this was sanitised
-            }
-
-            repository.update(toUpdate);
-            return buildResponse(toUpdate);
 
         });
 

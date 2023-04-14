@@ -3,6 +3,7 @@ package ar.com.caputo.drones.database.model;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.imaging.ImageReadException;
@@ -53,10 +54,13 @@ public class Medication extends BaseEntityModel {
     /**
      * Empty constructor required for ORMLite reflection-based mapping
      */
-    public Medication() {}
+    public Medication() {
+        this.ignoredUpdateAttributes = Set.of("associatedDrone");
+    }
 
     public Medication(String code, String name, int weight) throws InvalidInputFormatException {
 
+        this.ignoredUpdateAttributes = Set.of("associatedDrone");
         setCode(code);
         setName(name);
         setWeight(weight);

@@ -2,6 +2,7 @@ package ar.com.caputo.drones.database.model;
 
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.Set;
 
 import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DataType;
@@ -65,12 +66,15 @@ public class Drone extends BaseEntityModel {
     /**
      * Empty constructor required for ORMLite reflection-based mapping
      */
-    public Drone() {}
+    public Drone() {
+        this.ignoredUpdateAttributes = Set.of("load");
+    }
     
     public Drone(String serialNumber,
                  String model, String state,
                  int weightLimit, int batteryLevel) throws InvalidInputFormatException {
-                    
+        
+        this.ignoredUpdateAttributes = Set.of("load");
         setSerialNumber(serialNumber);
         setBatteryLevel(batteryLevel);
         setWeightLimit(weightLimit);
