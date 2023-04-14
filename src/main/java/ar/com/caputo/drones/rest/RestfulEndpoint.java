@@ -4,6 +4,8 @@ import static spark.Spark.get;
 
 import java.util.Map;
 
+import com.google.gson.JsonObject;
+
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.repo.BaseCrudRepository;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
@@ -12,15 +14,24 @@ public abstract class RestfulEndpoint<T> {
     
     public final String BASE_ENDPOINT;
     protected final BaseCrudRepository<T,String> repository;
+    protected static final String PAYLOAD_ENCODING = "application/json";
 
     public RestfulEndpoint(final String BASE_ENDPOINT, final BaseCrudRepository<T, String> repo) {
         this.BASE_ENDPOINT = DroneService.getInstance().API_URL + BASE_ENDPOINT;
         this.repository = repo;
-        register();
+        registerRoutes();
     
     }
 
-    protected void register() {
+     /**
+     * Validates whether the given payload is
+     * enough to fulfil the model's
+     * **not-null field** requirements.
+     * IT DOES NOT CHECK FOR INPUT VALIDITY
+     */
+    protected abstract boolean payloadCanFulfilModel(JsonObject payload);
+
+    protected void registerRoutes() {
         baseGet();
         getObject();
         addObject();
@@ -51,6 +62,13 @@ public abstract class RestfulEndpoint<T> {
     }
 
     public abstract void addObject();
+
+     /**
+     * This endpoint is an all-or-nothing endpoint,
+     * if any error is present on the payload, the entire
+     * bulk is rejected. 
+     */
+    public abstract void bulkAdd();
 
     public abstract void updateObject();
 
