@@ -10,8 +10,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonArray;
@@ -31,13 +31,27 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
         super("/drones", new DroneRepository(DroneService.getInstance().getDataSource()));
     }
 
-    protected void register() {
-        super.register();
+    protected void registerRoutes() {
+        super.registerRoutes();
         bulkAdd();
         getAvailableDrones();
         getBatteryLevel();
         contents();
     }
+
+    @Override
+    protected final boolean payloadCanFulfilModel(JsonObject payload) {
+
+        Set<String> requiredFields = Set.of(
+            "serialNumber",
+            "model",
+            "state",
+            "weightLimit",
+            "batteryLevel"
+        );
+        return payload.keySet().containsAll(requiredFields);
+
+    } 
 
     /**
      * This endpoint will return all drones available
@@ -74,34 +88,15 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     }
 
-    private final boolean isValidDronePayload(JsonObject payload) {
-        return payload.entrySet().stream()
-        .map((entry) -> entry.getKey())
-        .collect(Collectors.toUnmodifiableList())
-        .containsAll(Arrays.asList(
-            new String[] {
-                "serialNumber",
-                "model",
-                "state", 
-                "weightLimit",
-                "batteryLevel"
-             }));
-
-    } 
-
     @Override
     public void addObject() {
 
-        post(BASE_ENDPOINT, "application/json", (req, resp) -> {
+        post(BASE_ENDPOINT, PAYLOAD_ENCODING, (req, resp) -> {
 
             JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
-
-            /*
-               Checking whether the request body contains all required
-               params to create a new Drone
-            */
+            
            
-            if(!isValidDronePayload(requestBody)) {
+            if(!payloadCanFulfilModel(requestBody)) {
 
                 resp.status(400);
                 return null;
@@ -138,14 +133,10 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     }
 
-    /**
-     * This endpoint is an everything-or-none endpoint,
-     * if any error is present on the payload, the entire
-     * bulk is rejected. 
-     */
+    @Override
     public void bulkAdd() {
 
-        post(BASE_ENDPOINT + "/bulk", "application/json", (req, resp) -> {
+        post(BASE_ENDPOINT + "/bulk", PAYLOAD_ENCODING, (req, resp) -> {
 
             JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class); 
             JsonArray bulkData = requestBody.get("bulk").getAsJsonArray();
@@ -155,7 +146,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             bulkData.forEach((jsonDrone) -> {
 
                 JsonObject toBuild = DroneService.GSON.fromJson(jsonDrone, JsonObject.class);                
-                if(isValidDronePayload(toBuild)) {
+                if(payloadCanFulfilModel(toBuild)) {
 
                     try {
                         dronesToCreate.add(new Drone(
@@ -201,7 +192,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
     @Override
     public void deleteObject() {
 
-        delete(BASE_ENDPOINT + "/:id", "application/json", (req, resp) -> {
+        delete(BASE_ENDPOINT + "/:id", PAYLOAD_ENCODING, (req, resp) -> {
 
             Drone toDelete;
             try {
@@ -237,15 +228,10 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
 
             Drone toUpdate;
+            
             try {
                 toUpdate = repository.get(req.params(":id"));
-            } catch(ResourceNotFoundException ex) {
-                resp.status(404);
-                return null;
-            }
-
-            try {
-
+        
                 requestBody.entrySet().stream()
                 .map((entry) -> entry.getKey())
                 .collect(Collectors.toUnmodifiableList()).forEach(attribute -> {
@@ -291,6 +277,9 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             
             });
 
+            } catch (ResourceNotFoundException ex) {
+                resp.status(404);
+                return null;
             } catch (UnmetConditionsException ex) {
                 resp.status(400);
                 return buildResponse(ex.getMessage()); // this was sanitised

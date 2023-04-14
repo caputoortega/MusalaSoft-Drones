@@ -1,8 +1,6 @@
 package ar.com.caputo.drones.database.model;
 
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 
 import com.j256.ormlite.dao.ForeignCollection;
