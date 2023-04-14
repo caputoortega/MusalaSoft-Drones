@@ -67,8 +67,6 @@ public class DroneService {
             
         }
 
-        System.out.println("dbName is " + dbName);
-
         DroneService.getInstance().configure(apiAddress, apiPort, dbName);
     
     }
@@ -112,17 +110,19 @@ public class DroneService {
         /*
          * Init tasks
          */
+        
+        /* BatteryLevelLogTask batteryTask = new BatteryLevelLogTask();
+        batteryTask.init(); */
 
-/*         BatteryLevelLogTask batteryTask = new BatteryLevelLogTask();
-        batteryTask.init();
-
-        // Ensuring the logging task gets shutdown properly
+        // Ensures Spark shuts down properly
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             
-            batteryTask.shutdown();
-            getScheduler().shutdown();
+           /*  batteryTask.shutdown();
+            getScheduler().shutdown(); */
 
-        })); */
+            Spark.stop();
+
+        }));
     
     }
 
