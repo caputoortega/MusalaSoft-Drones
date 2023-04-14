@@ -1,16 +1,21 @@
 package ar.com.caputo.drones.rest;
 
 import static spark.Spark.get;
+import static spark.Spark.patch;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
 
 import ar.com.caputo.drones.DroneService;
+import ar.com.caputo.drones.database.model.BaseEntityModel;
 import ar.com.caputo.drones.database.repo.BaseCrudRepository;
+import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
+import ar.com.caputo.drones.exception.UnmetConditionsException;
 
-public abstract class RestfulEndpoint<T> {
+public abstract class RestfulEndpoint<T extends BaseEntityModel> {
     
     public final String BASE_ENDPOINT;
     protected final BaseCrudRepository<T,String> repository;
@@ -70,7 +75,38 @@ public abstract class RestfulEndpoint<T> {
      */
     public abstract void bulkAdd();
 
-    public abstract void updateObject();
+    public void updateObject() {
+        patch(BASE_ENDPOINT + "/:id", (req, resp) -> {
+
+            JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
+
+            T toUpdate;
+            
+            try {
+                toUpdate = repository.get(req.params(":id"));
+        
+                requestBody.entrySet().stream()
+                .map((entry) -> entry.getKey())
+                .collect(Collectors.toUnmodifiableList()).forEach(attribute -> {
+                    toUpdate.update(attribute, requestBody.get(attribute));
+                });
+
+            } catch (ResourceNotFoundException ex) {
+                resp.status(404);
+                return null;
+            } catch (UnmetConditionsException ex) {
+                resp.status(400);
+                return buildResponse(ex.getMessage()); // this was sanitised
+            } catch (RequestProcessingException ex) {
+                resp.status(500);
+                return buildResponse(ex.getMessage()); // this was sanitised
+            }
+
+            repository.update(toUpdate);
+            return buildResponse(toUpdate);
+
+        });
+    }
 
     public abstract void deleteObject();
 
