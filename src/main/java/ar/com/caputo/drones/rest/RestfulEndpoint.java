@@ -2,6 +2,7 @@ package ar.com.caputo.drones.rest;
 
 import static spark.Spark.get;
 import static spark.Spark.patch;
+import static spark.Spark.delete;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -81,8 +82,8 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
             JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
 
             T toUpdate;
-            
             try {
+                
                 toUpdate = repository.get(req.params(":id"));
         
                 requestBody.entrySet().stream()
@@ -108,7 +109,32 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
         });
     }
 
-    public abstract void deleteObject();
+    public void deleteObject() {
+
+        delete(BASE_ENDPOINT + "/:id", PAYLOAD_ENCODING, (req, resp) -> {
+
+            T toDelete;
+            try {
+
+                toDelete = repository.get(req.params(":id"));
+
+                if(toDelete.canBeDeleted())
+                    return buildResponse(repository.delete(toDelete.id()));
+
+            } catch(ResourceNotFoundException ex) {
+                resp.status(404);
+                return null;
+            } catch(RequestProcessingException ex) {
+                resp.status(409);
+                return buildResponse(ex.getMessage());
+            }
+
+            resp.status(500);
+            return null;
+
+
+        });
+    }
 
     protected final String buildResponse(Object data) {
         return DroneService.GSON.toJson(Map.of("data", data));

@@ -183,37 +183,6 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     }
 
-    @Override
-    public void deleteObject() {
-
-        delete(BASE_ENDPOINT + "/:id", PAYLOAD_ENCODING, (req, resp) -> {
-
-            Drone toDelete;
-            try {
-                toDelete = repository.get(req.params(":id"));
-            } catch(ResourceNotFoundException ex) {
-                resp.status(404);
-                return null;
-            }
-
-            /*
-              If drone is not IDLE it means it's performing some
-              operation, or that the current state is unknown.
-              For said reason, and to prevent losing contact with
-              it causing a potential incident, deletions can only
-              be performed while their state is set to IDLE
-            */
-            if(toDelete.getState() != Drone.State.IDLE) {
-                resp.status(409);
-                return buildResponse("Cannot delete drone while not IDLE");
-            }
-    
-            return buildResponse(repository.delete(toDelete.getSerialNumber()));
-
-        });
-
-    }
-
     public void contents() {
 
         get(BASE_ENDPOINT + "/:id/items", (req, resp) -> {

@@ -12,6 +12,7 @@ import org.apache.commons.imaging.Imaging;
 import com.j256.ormlite.field.DatabaseField;
 
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
+import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
 
 public class Medication extends BaseEntityModel {
@@ -50,9 +51,10 @@ public class Medication extends BaseEntityModel {
 
     @DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true)
     private transient Drone associatedDrone;
+
     
     /**
-     * Empty constructor required for ORMLite reflection-based mapping
+     * No-args constructor required for ORMLite reflection-based mapping
      */
     public Medication() {
         this.ignoredUpdateAttributes = Set.of("associatedDrone");
@@ -158,6 +160,23 @@ public class Medication extends BaseEntityModel {
 
     public void setAssociatedDrone(Drone associatedDrone) {
         this.associatedDrone = associatedDrone;
+    }
+
+
+    @Override
+    public String id() { return getCode(); }
+
+    /**
+      * If the medication has been associated to a drone it
+      * means it cannot be deleted from the database or else
+      * it will cause the drones' load data to be unreliable 
+     */
+    @Override
+    public boolean canBeDeleted() throws RequestProcessingException {
+
+        if(getAssociatedDrone() != null)
+            throw new RequestProcessingException("Cannot delete medication when it is associated to a drone load!");
+        return true;
     }
 
     

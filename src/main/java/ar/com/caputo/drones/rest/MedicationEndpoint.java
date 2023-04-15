@@ -1,7 +1,6 @@
 package ar.com.caputo.drones.rest;
 
 import static spark.Spark.post;
-import static spark.Spark.delete;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import ar.com.caputo.drones.database.model.Medication;
 import ar.com.caputo.drones.database.repo.MedicationRepository;
 import ar.com.caputo.drones.exception.InvalidBulkItemException;
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
-import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
 public class MedicationEndpoint extends RestfulEndpoint<Medication> {
@@ -59,7 +57,6 @@ public class MedicationEndpoint extends RestfulEndpoint<Medication> {
             }
 
             Medication toCreate = new Medication();
-
             try { 
                 
                 repository.addNew(toCreate); 
@@ -125,36 +122,6 @@ public class MedicationEndpoint extends RestfulEndpoint<Medication> {
         }
 
         });
-
-    }
-
-    @Override
-    public void deleteObject() {
-
-        delete(BASE_ENDPOINT + "/:id", PAYLOAD_ENCODING, (req, resp) -> {
-
-            Medication toDelete;
-            try {
-                toDelete = repository.get(req.params(":id"));
-            } catch(ResourceNotFoundException ex) {
-                resp.status(404);
-                return null;
-            }
-
-            /*
-              If the medication has been associated to a drone it
-              means it cannot be deleted from the database or else
-              it will cause the drones' load data to be unreliable 
-            */
-            if(toDelete.getAssociatedDrone() != null) {
-                resp.status(409);
-                return buildResponse("Cannot delete medication when it is associated to a drone load!");
-            }
-    
-            return buildResponse(repository.delete(toDelete.getCode()));
-
-        });
-
 
     }
     

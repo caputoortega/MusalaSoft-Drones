@@ -4,12 +4,15 @@ import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Set;
 
+import org.eclipse.jetty.http.MetaData.Request;
+
 import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
+import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
 /**
@@ -64,7 +67,7 @@ public class Drone extends BaseEntityModel {
     private transient ForeignCollection<Medication> load;
 
     /**
-     * Empty constructor required for ORMLite reflection-based mapping
+     * No-args constructor required for ORMLite reflection-based mapping
      */
     public Drone() {
         this.ignoredUpdateAttributes = Set.of("load");
@@ -197,6 +200,24 @@ public class Drone extends BaseEntityModel {
 
     public ForeignCollection<Medication> getLoad() throws SQLException {
         return this.load;
+    }
+
+    @Override
+    public String id() { return getSerialNumber(); }
+    
+    /**
+     *  If drone is not IDLE it means it's performing some
+     *  operation, or that the current state is unknown.
+     *  For said reason, and to prevent losing contact with
+     *  it causing a potential incident, deletions can only
+     *  be performed while their state is set to IDLE
+     */
+    @Override
+    public boolean canBeDeleted() throws RequestProcessingException {
+
+        if(getState() != Drone.State.IDLE)
+            throw new RequestProcessingException("Cannot delete drone while not IDLE");
+        return true;
     }
 
 }

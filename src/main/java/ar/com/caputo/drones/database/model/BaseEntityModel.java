@@ -12,17 +12,19 @@ import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
-public class BaseEntityModel {
+public abstract class BaseEntityModel {
 
     /**
      * List of attributes to be ignored by the {@link #update()}
      * method
      */
-    protected Set<String> ignoredUpdateAttributes;
+    protected transient Set<String> ignoredUpdateAttributes;
 
     public BaseEntityModel() {
         this.ignoredUpdateAttributes = new HashSet<>();
     }
+
+    public abstract String id(); 
 
     @Override
     public String toString() {
@@ -99,4 +101,6 @@ public class BaseEntityModel {
 
     }
     
+    public abstract boolean canBeDeleted();
+
 }

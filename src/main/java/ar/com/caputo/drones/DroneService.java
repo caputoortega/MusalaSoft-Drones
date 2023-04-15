@@ -138,7 +138,6 @@ public class DroneService {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-
         }
         return this.source;
     }
