@@ -189,7 +189,7 @@ public class MedicationEndpointTest extends EndpointTest {
 
         assertEquals(newName,
                     responseJson.getAsJsonObject("data")
-                        .get("code").getAsString(),
+                        .get("name").getAsString(),
                     "Name was not updated properly!");
         
 
