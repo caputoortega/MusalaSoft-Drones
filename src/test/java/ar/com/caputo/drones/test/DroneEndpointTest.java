@@ -84,9 +84,9 @@ public class DroneEndpointTest extends EndpointTest {
     }
 
     @Test
-    @DisplayName("POST:/drones should fail registering a drone incomplete payload")
+    @DisplayName("POST:/drones should fail registering due to incomplete payload")
     @Order(2)
-    public void POSTdrones_Should_Fail_Registering_A_Drone_With_Incomplete_Payload() throws Exception {
+    public void POSTdrones_Should_Fail_Registering_Due_To_Incomplete_Payload() throws Exception {
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("serialNumber", TEST_DRONE_SERIAL);
@@ -378,7 +378,7 @@ public class DroneEndpointTest extends EndpointTest {
 
         HttpResponse<String> response = client(postRequest("/drones/bulk", payload));
 
-        assertEquals(200, response.statusCode(), "Invalid response code");
+        assertEquals(201, response.statusCode(), "Invalid response code");
         assertTrue(isValidContentType(response), "Content is not JSON-encoded on update check!");
 
         JsonObject responseJson = DroneService.GSON.fromJson(response.body(), JsonObject.class);
