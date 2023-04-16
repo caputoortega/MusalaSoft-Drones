@@ -46,7 +46,7 @@ public class Drone extends BaseEntityModel {
         RETURNING;
     }
 
-    @DatabaseField(id = true, columnName = "sn", columnDefinition = "VARCHAR(100) NOT NULL", useGetSet = true) 
+    @DatabaseField(id = true, columnName = "sn", columnDefinition = "VARCHAR(100) NOT NULL", uniqueIndex = true ,unique = true, useGetSet = true) 
     private String serialNumber;
 
     @DatabaseField(canBeNull = false, dataType = DataType.ENUM_NAME, defaultValue = "UNKNOWN")
@@ -218,8 +218,42 @@ public class Drone extends BaseEntityModel {
         return true;
     }
 
-    public boolean canHoldWeightDifference(int oldWeight, int newWeight) {
-        return (load.stream().mapToInt(Medication::getWeight).sum() - oldWeight) + newWeight <= weightLimit;
+    public int getTotalWeight() {
+        return (load.stream().mapToInt(Medication::getWeight)).sum();
+    }
+
+    /**
+     * Determines if the new weight to be added can
+     * be held by the drone.
+     * For calculating if an upda
+     * @param weight
+     * @return
+     */
+    public boolean canHold(int weight) {
+        return getTotalWeight() + weight <= weightLimit;
+    }
+
+    /**
+     * Calculates the weight difference for a medication.
+     * This method is used <b>when updating the weight
+     * of a medication</b> and <b>NOT</b> when calculating
+     * whether a new medication can be added or not. For that
+     * you can use {@link #canHold}
+     * The calculation performed by this method is:
+     * <p>
+     * <math> (Σ(l) - Wo) + Wn <= L </math>
+     * </p>
+     * <p>where: </p>
+     * <p>l = {@link #load} individual weights</p>
+     * <p>Wo = {@param medicationOldWeight}</p>
+     * <p>Wn = {@param medicationNewWeight}</p>
+     * <p>L = {@link #weightLimit}</p>
+     * @param medicationOldWeight
+     * @param medicationNewWeight
+     * @return whether the weight update falls into the {@link #weightLimit} range
+     */
+    public boolean canHoldWeightDifference(int medicationOldWeight, int medicationNewWeight) {
+        return (getTotalWeight() - medicationOldWeight) + medicationNewWeight <= weightLimit;
     }
 
 }

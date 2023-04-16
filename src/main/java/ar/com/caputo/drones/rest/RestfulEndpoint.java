@@ -4,6 +4,7 @@ import static spark.Spark.get;
 import static spark.Spark.patch;
 import static spark.Spark.delete;
 
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,7 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
         baseGet();
         getObject();
         addObject();
+        bulkAdd();
         updateObject();
         deleteObject();
     }
@@ -81,10 +83,11 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
 
             JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
 
+            String id = req.params(":id");
             T toUpdate;
             try {
                 
-                toUpdate = repository.get(req.params(":id"));
+                toUpdate = repository.get(id);
         
                 requestBody.entrySet().stream()
                 .map((entry) -> entry.getKey())
@@ -92,19 +95,21 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
                     toUpdate.update(attribute, requestBody.get(attribute));
                 });
 
+
+                repository.update(toUpdate, id);
+                return buildResponse(toUpdate);
+
+
             } catch (ResourceNotFoundException ex) {
                 resp.status(404);
                 return null;
-            } catch (UnmetConditionsException ex) {
+            } catch (UnmetConditionsException | SQLException ex) {
                 resp.status(400);
                 return buildResponse(ex.getMessage()); // this was sanitised
             } catch (RequestProcessingException ex) {
                 resp.status(500);
                 return buildResponse(ex.getMessage()); // this was sanitised
             }
-
-            repository.update(toUpdate);
-            return buildResponse(toUpdate);
 
         });
     }

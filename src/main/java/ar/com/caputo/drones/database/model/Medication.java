@@ -33,7 +33,7 @@ public class Medication extends BaseEntityModel {
      * and retrieved using getters and setters instead of the
      * default reflection method to check for invalid inputs.
      */
-    @DatabaseField(id = true, columnDefinition = "VARCHAR(255) NOT NULL", useGetSet = true)
+    @DatabaseField(id = true, columnDefinition = "VARCHAR(255) NOT NULL", uniqueIndex = true, unique = true, useGetSet = true)
     private String code;
 
     /**
@@ -128,7 +128,7 @@ public class Medication extends BaseEntityModel {
      * If the resource is not valid throws an {@link InvalidInputFormatException},
      * if the resource is not found or is unreadable throws a
      * {@link ResourceNotFoundException}
-     * @param base64String
+     * @param imageUrl 
      * @throws InvalidInputFormatException
      */
     public void setMedicationCaseImageUrl(String imageUrl) throws InvalidInputFormatException, ResourceNotFoundException {
@@ -166,7 +166,7 @@ public class Medication extends BaseEntityModel {
         } else {
            throw new RequestProcessingException("The weight difference cannot be held by the associated drone!");
         }
-        
+
     }
 
     public Drone getAssociatedDrone() {

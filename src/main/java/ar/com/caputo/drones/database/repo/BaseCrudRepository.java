@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
-
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
@@ -25,6 +24,7 @@ public class BaseCrudRepository<T, ID> {
         try { 
             this.dao = DaoManager.createDao(DroneService.getInstance().getDataSource(), model);
             TableUtils.createTableIfNotExists(DroneService.getInstance().getDataSource(), model);
+        
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -74,16 +74,8 @@ public class BaseCrudRepository<T, ID> {
         return List.of(dao.create(bulk), bulk);
     }
 
-    public boolean update(T model) {
-
-        try {
-            return dao.update(model) == 1;
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-
-        return false;
-
+    public boolean update(T model, ID id) throws SQLException {
+            return dao.updateId(model, id) == 1;
     }
 
     public boolean delete(ID id) {
