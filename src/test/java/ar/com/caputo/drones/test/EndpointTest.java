@@ -59,6 +59,13 @@ public class EndpointTest {
     public static void setup() {
         
         Spark.awaitStop();
+        // Waits .5 seconds to allow Spark's Jetty server
+        // to shutdown
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         DroneService.main(new String[]{"-h:0.0.0.0", "-p:" + API_PORT, "-db:dronesTest"});
         API = "http://localhost:" + API_PORT + DroneService.getInstance().API_URL;
 
