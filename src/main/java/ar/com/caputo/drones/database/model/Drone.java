@@ -4,8 +4,6 @@ import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.jetty.http.MetaData.Request;
-
 import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
@@ -218,6 +216,10 @@ public class Drone extends BaseEntityModel {
         if(getState() != Drone.State.IDLE)
             throw new RequestProcessingException("Cannot delete drone while not IDLE");
         return true;
+    }
+
+    public boolean canHoldWeightDifference(int oldWeight, int newWeight) {
+        return (load.stream().mapToInt(Medication::getWeight).sum() - oldWeight) + newWeight <= weightLimit;
     }
 
 }

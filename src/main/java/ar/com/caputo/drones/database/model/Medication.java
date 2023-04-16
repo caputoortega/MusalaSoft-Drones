@@ -3,6 +3,7 @@ package ar.com.caputo.drones.database.model;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -150,8 +151,22 @@ public class Medication extends BaseEntityModel {
         return this.weight;
     }
 
+    /**
+     * Will update the medication weight only if
+     * the {@link #associatedDrone} (if it has one)
+     * can support the weight difference, else it
+     * throws a {@link RequestProcessingException}
+     * @param weight that the medication should have
+     */
     public void setWeight(int weight) {
-        this.weight = weight;
+
+        if(associatedDrone == null ||
+           associatedDrone.canHoldWeightDifference(this.weight, weight)) {
+            this.weight = weight;
+        } else {
+           throw new RequestProcessingException("The weight difference cannot be held by the associated drone!");
+        }
+        
     }
 
     public Drone getAssociatedDrone() {
@@ -162,6 +177,21 @@ public class Medication extends BaseEntityModel {
         this.associatedDrone = associatedDrone;
     }
 
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Medication medication = (Medication) o;
+        return weight == medication.weight &&
+                code.equals(medication.code) &&
+                name.equals(medication.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(code, name, weight);
+    }
 
     @Override
     public String id() { return getCode(); }

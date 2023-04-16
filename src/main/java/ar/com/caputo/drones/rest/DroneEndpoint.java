@@ -2,7 +2,6 @@ package ar.com.caputo.drones.rest;
 
 import static spark.Spark.get;
 import static spark.Spark.post;
-import static spark.Spark.delete;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,8 +112,8 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
             try { 
                 
-                resp.status(201);
                 repository.addNew(toCreate); 
+                resp.status(201);
                 return buildResponse(toCreate);
 
             } catch(UnmetConditionsException ex) {
@@ -139,16 +138,16 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             try { 
             bulkData.forEach((jsonDrone) -> {
 
-                JsonObject toBuild = DroneService.GSON.fromJson(jsonDrone, JsonObject.class);                
-                if(payloadCanFulfilModel(toBuild)) {
+                JsonObject toCreate = DroneService.GSON.fromJson(jsonDrone, JsonObject.class);                
+                if(payloadCanFulfilModel(toCreate)) {
 
                     try {
                         dronesToCreate.add(new Drone(
-                            toBuild.get("serialNumber").getAsString(),
-                            toBuild.get("model").getAsString(),
-                            toBuild.get("state").getAsString(),
-                            toBuild.get("weightLimit").getAsInt(),
-                            toBuild.get("batteryLevel").getAsInt()
+                            toCreate.get("serialNumber").getAsString(),
+                            toCreate.get("model").getAsString(),
+                            toCreate.get("state").getAsString(),
+                            toCreate.get("weightLimit").getAsInt(),
+                            toCreate.get("batteryLevel").getAsInt()
                         ));
                     } catch (InvalidInputFormatException | IllegalArgumentException e) {
                         throw new RuntimeException(e);
@@ -173,6 +172,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
         try {
             List<?> bulkAddResult = repository.addNewBulk(dronesToCreate);
+            resp.status(201);
             return buildBulkResponse((int) bulkAddResult.get(0), (List<?>) bulkAddResult.get(1));
         } catch (SQLException ex) {
             resp.status(422);
