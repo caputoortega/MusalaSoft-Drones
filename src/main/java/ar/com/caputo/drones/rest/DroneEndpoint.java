@@ -26,10 +26,9 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     protected void registerRoutes() {
         super.registerRoutes();
-        bulkAdd();
         getAvailableDrones();
         getBatteryLevel();
-        contents();
+        getItems();
     }
 
     @Override
@@ -183,12 +182,16 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     }
 
-    public void contents() {
+    public void getItems() {
 
         get(BASE_ENDPOINT + "/:id/items", (req, resp) -> {
             return buildResponse(repository.get(req.params(":id")).getLoad());
         });
 
+    }
+
+    public List<Drone> getAllDrones() {
+        return repository.listAll();
     }
 
 }

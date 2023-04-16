@@ -1,16 +1,29 @@
 package ar.com.caputo.drones.task;
 
-import java.time.LocalDateTime;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.j256.ormlite.support.ConnectionSource;
+
 import ar.com.caputo.drones.DroneService;
+import ar.com.caputo.drones.database.model.BatteryAuditLog;
+import ar.com.caputo.drones.database.repo.BatteryAuditLogRepository;
 
 public class BatteryLevelLogTask {
 
+    private BatteryAuditLogRepository repository;
+    private boolean isShutdownLog = false;
+
+    public BatteryLevelLogTask(ConnectionSource source) {
+        this.repository = new BatteryAuditLogRepository(source);
+    }
+
     private Runnable task = () -> {
 
-        System.out.println("LOGGING!!! " + LocalDateTime.now());
+        DroneService.getInstance().getDroneEnpoint().getAllDrones().forEach(drone -> {
+            repository.addNew(new BatteryAuditLog(drone, isShutdownLog));
+        });
+
     };
     
     private ScheduledFuture<?> scheduledTask; 
@@ -21,7 +34,7 @@ public class BatteryLevelLogTask {
                             .scheduleAtFixedRate(
                                 this.task,
                                 0,
-                                5,
+                                DroneService.getInstance().getLogInterval(),
                                 TimeUnit.SECONDS);
 
     }
@@ -32,9 +45,9 @@ public class BatteryLevelLogTask {
      * and passively cancels the scheduled task
      */
     public void shutdown() {
-
+        this.isShutdownLog = true;
         scheduledTask.cancel(false);
-        task.run();
+/*         task.run(); */
 
     }
 }

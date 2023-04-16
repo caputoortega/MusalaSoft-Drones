@@ -1,5 +1,6 @@
 package ar.com.caputo.drones;
 
+import java.lang.System.Logger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -10,6 +11,7 @@ import com.j256.ormlite.support.ConnectionSource;
 
 import ar.com.caputo.drones.rest.DroneEndpoint;
 import ar.com.caputo.drones.rest.MedicationEndpoint;
+import ar.com.caputo.drones.task.BatteryLevelLogTask;
 import spark.Spark;
 
 public class DroneService {
@@ -27,19 +29,27 @@ public class DroneService {
 
     private ScheduledExecutorService scheduler;
     
+    /**
+     * 4 minutes default logInterval for {@link BatteryLevelLogTask}
+     */
+    private long logInterval = 240;
+    private final Logger BATTERY_AUDIT_LOGGER = System.getLogger("BATTERY AUDIT LOG");
+    
     private static DroneService instance;
+    private DroneEndpoint droneEnpoint;
     private DroneService() {}
 
     public static DroneService getInstance() {
         if(instance == null) instance = new DroneService();
         return instance;
     }
-
+    
     public static void main(String... args) {
 
         String apiAddress = null;
         int apiPort = -1;
         String dbName = null;
+        int logInterval = 240;
 
         if(args.length > 0) {
 
@@ -62,16 +72,22 @@ public class DroneService {
                         dbName = argData[1];
                         break;
                     }
+                    case "--logInterval":
+                    case "-li"          :
+                        logInterval = Integer.parseInt(argData[1]);
+                        break;
                 }
             }
             
         }
 
-        DroneService.getInstance().configure(apiAddress, apiPort, dbName);
+        DroneService.getInstance().configure(apiAddress, apiPort, dbName, logInterval);
     
     }
 
-    private void configure(final String API_ADDRESS, final int API_PORT, final String USER_PROVIDED_DB_NAME) {
+    private void configure(final String API_ADDRESS, final int API_PORT, final String USER_PROVIDED_DB_NAME, final int LOG_INTERVAL) {
+
+        this.logInterval = LOG_INTERVAL;
 
         String dbName = null; 
         if(USER_PROVIDED_DB_NAME != null) dbName = USER_PROVIDED_DB_NAME.strip();
@@ -103,7 +119,7 @@ public class DroneService {
          * Endpoint registration
          */
 
-        new DroneEndpoint();
+        this.droneEnpoint = new DroneEndpoint();
         new MedicationEndpoint();
         
 
@@ -111,15 +127,16 @@ public class DroneService {
          * Init tasks
          */
         
-        /* BatteryLevelLogTask batteryTask = new BatteryLevelLogTask();
-        batteryTask.init(); */
+        BatteryLevelLogTask batteryTask = new BatteryLevelLogTask(getDataSource());
+        batteryTask.init();
 
         // Ensures Spark shuts down properly
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             
-           /*  batteryTask.shutdown();
-            getScheduler().shutdown(); */
-
+            
+            batteryTask.shutdown();
+            getScheduler().shutdown();
+            
             Spark.stop();
 
         }));
@@ -162,5 +179,19 @@ public class DroneService {
             this.scheduler = Executors.newScheduledThreadPool(1);
         return this.scheduler;
     }
+
+    public DroneEndpoint getDroneEnpoint() {
+        return droneEnpoint;
+    }
+
+    public long getLogInterval() {
+        return logInterval;
+    }
+
+    public Logger getBatteryAuditLogger() {
+        return this.BATTERY_AUDIT_LOGGER;
+    }
+    
+    
 
 }
