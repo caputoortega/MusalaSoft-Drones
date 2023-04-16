@@ -56,13 +56,20 @@ public class MedicationEndpoint extends RestfulEndpoint<Medication> {
 
             }
 
-            Medication toCreate = new Medication();
+            Medication toCreate;
             try { 
                 
-                repository.addNew(toCreate); 
-                return toCreate;
 
-            } catch(UnmetConditionsException ex) {
+                toCreate = new Medication(
+                    requestBody.get("code").getAsString(),
+                    requestBody.get("name").getAsString(),
+                    requestBody.get("weight").getAsInt());
+
+                repository.addNew(toCreate); 
+                resp.status(201);
+                return buildResponse(toCreate);
+
+            } catch(InvalidInputFormatException ex) {
                 resp.status(400);
                 return buildResponse(ex.getMessage());
             }
@@ -83,14 +90,14 @@ public class MedicationEndpoint extends RestfulEndpoint<Medication> {
             try { 
             bulkData.forEach((jsonMedication) -> {
 
-                JsonObject toBuild = DroneService.GSON.fromJson(jsonMedication, JsonObject.class);                
-                if(payloadCanFulfilModel(toBuild)) {
+                JsonObject toCreate = DroneService.GSON.fromJson(jsonMedication, JsonObject.class);                
+                if(payloadCanFulfilModel(toCreate)) {
 
                     try {
                         medicationsToCreate.add(new Medication(
-                            toBuild.get("code").getAsString(),
-                            toBuild.get("name").getAsString(),
-                            toBuild.get("weight").getAsInt()
+                            toCreate.get("code").getAsString(),
+                            toCreate.get("name").getAsString(),
+                            toCreate.get("weight").getAsInt()
                         ));
                     } catch (InvalidInputFormatException | IllegalArgumentException e) {
                         throw new RuntimeException(e);
@@ -115,6 +122,7 @@ public class MedicationEndpoint extends RestfulEndpoint<Medication> {
 
         try {
             List<?> bulkAddResult = repository.addNewBulk(medicationsToCreate);
+            resp.status(201);
             return buildBulkResponse((int) bulkAddResult.get(0), (List<?>) bulkAddResult.get(1));
         } catch (SQLException ex) {
             resp.status(422);
