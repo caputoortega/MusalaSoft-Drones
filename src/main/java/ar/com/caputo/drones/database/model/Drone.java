@@ -46,7 +46,7 @@ public class Drone extends BaseEntityModel {
         RETURNING;
     }
 
-    @DatabaseField(id = true, columnName = "sn", columnDefinition = "VARCHAR(100) NOT NULL", uniqueIndex = true ,unique = true, useGetSet = true) 
+    @DatabaseField(id = true, columnName = "sn", columnDefinition = "VARCHAR(100) NOT NULL", unique = true, uniqueIndex = true, useGetSet = true) 
     private String serialNumber;
 
     @DatabaseField(canBeNull = false, dataType = DataType.ENUM_NAME, defaultValue = "UNKNOWN")
@@ -94,25 +94,13 @@ public class Drone extends BaseEntityModel {
      * stores it in the {@code serialNumber} attribute 
      * @param serialNumber
      */
-    public void setSerialNumber(String serialNumber) throws InvalidInputFormatException {
-
-        /*
-         * Making sure the serialNumber is not "available", so it
-         * does not collide with the "/api/version/drones/available"
-         * endpoint
-         */
-        if(serialNumber.equals("available")) throw new InvalidInputFormatException(serialNumber, "any string except \"available\"");
+    public void setSerialNumber(String serialNumber) {
         
-        /*
-          * Making sure the serialNumber doesn't contain more than
-          * 100 characters
-        */
-        if(serialNumber.length() > 100) serialNumber = serialNumber.substring(0, 100);
-        
-        this.serialNumber = serialNumber;
+        if(validateId(serialNumber)) this.serialNumber = serialNumber;
 
     }
 
+  
     public int getBatteryLevel() {
         return this.batteryLevel;
     }
@@ -199,9 +187,6 @@ public class Drone extends BaseEntityModel {
     public ForeignCollection<Medication> getLoad() throws SQLException {
         return this.load;
     }
-
-    @Override
-    public String id() { return getSerialNumber(); }
     
     /**
      *  If drone is not IDLE it means it's performing some
@@ -254,6 +239,34 @@ public class Drone extends BaseEntityModel {
      */
     public boolean canHoldWeightDifference(int medicationOldWeight, int medicationNewWeight) {
         return (getTotalWeight() - medicationOldWeight) + medicationNewWeight <= weightLimit;
+    }
+
+
+
+    @Override
+    public String id() { return getSerialNumber(); }
+
+    @Override
+    public boolean validateId(String id) {
+       /*
+         * Making sure the serialNumber is not "available", so it
+         * does not collide with the "/api/version/drones/available"
+         * endpoint
+         */
+        if(id.equals("available")) throw new InvalidInputFormatException(id, "any string except \"available\"");
+
+        /*
+          * Making sure the serialNumber doesn't contain more than
+          * 100 characters
+        */
+        if(id.length() > 100) throw new InvalidInputFormatException(id, "any string shorter than 100 characters");
+
+        return true;
+    }
+
+    @Override
+    public String futureId() {
+        return this.futureId;
     }
 
 }

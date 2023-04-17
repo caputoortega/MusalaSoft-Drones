@@ -20,6 +20,13 @@ public class BatteryAuditLog extends BaseEntityModel {
     @DatabaseField(canBeNull = false)
     private int loggedBatteryLevel;
 
+    /**
+     * Is this log registered during
+     * the service shutdown?
+     * Shutdown logs are non-automated
+     * battery logs triggered AFTER a
+     * shutdown command is sent.
+     */
     @DatabaseField(canBeNull = true)
     private boolean shutdownLog;
 
@@ -82,9 +89,22 @@ public class BatteryAuditLog extends BaseEntityModel {
         return String.valueOf(getId());
     }
 
+    /**
+     * Forcefully set to false.
+     * Logs should not be deleted.
+     */
     @Override
     public boolean canBeDeleted() {
        return false;
+    }
+
+    /**
+     * Forcefully set to true.
+     * No validation takes place.
+     */
+    @Override
+    public boolean validateId(String id) {
+        return true;
     }
     
 }

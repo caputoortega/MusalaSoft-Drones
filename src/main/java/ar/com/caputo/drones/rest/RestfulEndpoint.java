@@ -109,7 +109,7 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
                 });
 
 
-                repository.update(toUpdate, id);
+                repository.update(toUpdate);
                 return buildResponse(toUpdate);
 
 

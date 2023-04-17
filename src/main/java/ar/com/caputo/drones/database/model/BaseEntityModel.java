@@ -7,12 +7,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gson.JsonElement;
+import com.j256.ormlite.field.DatabaseField;
 
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
 public abstract class BaseEntityModel {
+
+    protected transient String futureId;
 
     /**
      * List of attributes to be ignored by the {@link #update()}
@@ -25,6 +28,15 @@ public abstract class BaseEntityModel {
     }
 
     public abstract String id(); 
+    public abstract boolean validateId(String id);
+
+    public void setFutureId(String futureId) {
+        if(validateId(futureId)) this.futureId = futureId;
+    }
+
+    public String futureId() {
+        return this.futureId;
+    }
 
     @Override
     public String toString() {
@@ -68,6 +80,14 @@ public abstract class BaseEntityModel {
         try {
 
             attributeFieldType = getClass().getDeclaredField(attribute).getType();
+
+            // If the attribute to be updated is the ID
+            if(getClass().getDeclaredField(attribute).getAnnotation(DatabaseField.class).id()) {
+                setFutureId(newValue.getAsString());
+                return;
+            };
+ 
+
             /*
              * Retrieving getX(Obj)
              * Since enum have two getters we are going to use the public
@@ -92,7 +112,7 @@ public abstract class BaseEntityModel {
             else getterMethod.invoke(this, newValue.getAsString());
 
         } catch (NoSuchFieldException | NoSuchMethodException noSuchEx) {
-            throw new UnmetConditionsException(attribute + " does not exist");
+            throw new UnmetConditionsException("Attribute ".concat(attribute).concat(" does not exist"));
         } catch (IllegalArgumentException ex) {
             throw new UnmetConditionsException(ex.getCause().getMessage());
         } catch (IllegalAccessException | InvocationTargetException ex) {

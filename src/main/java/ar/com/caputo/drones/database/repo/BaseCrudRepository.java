@@ -11,10 +11,11 @@ import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.table.TableUtils;
 
 import ar.com.caputo.drones.DroneService;
+import ar.com.caputo.drones.database.model.BaseEntityModel;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
-public class BaseCrudRepository<T, ID> {
+public class BaseCrudRepository<T extends BaseEntityModel, ID> {
 
     private final Class<T> type;
 
@@ -83,8 +84,14 @@ public class BaseCrudRepository<T, ID> {
         
     }
 
-    public boolean update(T model, ID id) throws SQLException {
-            return dao.update(model) == 1 && dao.updateId(model, id) == 1;
+    public boolean update(T model) throws SQLException {
+
+        if(model.futureId() != null & !model.id().equals(model.futureId())) {
+            return dao.update(model) == 1 && dao.updateId(model, (ID)model.futureId()) == 1;
+        }
+
+        return dao.update(model) ==1;
+
     }
 
     public boolean delete(ID id) {
