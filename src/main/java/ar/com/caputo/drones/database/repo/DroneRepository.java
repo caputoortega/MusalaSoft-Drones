@@ -6,8 +6,8 @@ import ar.com.caputo.drones.database.model.Drone;
 
 public class DroneRepository extends BaseCrudRepository<Drone, String> {
 
-    public DroneRepository(ConnectionSource source) {
-        super(source, Drone.class);
+    public DroneRepository() {
+        super(Drone.class);
     }
     
 }

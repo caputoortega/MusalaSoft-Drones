@@ -21,7 +21,7 @@ import ar.com.caputo.drones.exception.UnmetConditionsException;
 public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     public DroneEndpoint() {
-        super("/drones", new DroneRepository(DroneService.getInstance().getDataSource()));
+        super("/drones", new DroneRepository());
     }
 
     protected void registerRoutes() {

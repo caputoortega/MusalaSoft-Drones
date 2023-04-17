@@ -6,8 +6,8 @@ import ar.com.caputo.drones.database.model.BatteryAuditLog;
 
 public class BatteryAuditLogRepository extends BaseCrudRepository<BatteryAuditLog, Integer> {
 
-    public BatteryAuditLogRepository(ConnectionSource source) {
-        super(source, BatteryAuditLog.class);
+    public BatteryAuditLogRepository() {
+        super(BatteryAuditLog.class);
     }
     
 }

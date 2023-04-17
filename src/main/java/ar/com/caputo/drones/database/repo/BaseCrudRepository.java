@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
@@ -19,7 +20,7 @@ public class BaseCrudRepository<T, ID> {
 
     private Dao<T, ID> dao;
 
-    public BaseCrudRepository(ConnectionSource source, Class<T> model) {
+    public BaseCrudRepository(Class<T> model) {
         this.type = model;
         try { 
             this.dao = DaoManager.createDao(DroneService.getInstance().getDataSource(), model);
@@ -71,6 +72,7 @@ public class BaseCrudRepository<T, ID> {
 
 
     public List<?> addNewBulk(List<T> bulk) throws SQLException {
+      
         return List.of(dao.create(bulk), bulk);
     }
 

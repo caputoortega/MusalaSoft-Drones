@@ -6,8 +6,8 @@ import ar.com.caputo.drones.database.model.Medication;
 
 public class MedicationRepository extends BaseCrudRepository<Medication, String> {
 
-    public MedicationRepository(ConnectionSource source) {
-        super(source, Medication.class);
+    public MedicationRepository() {
+        super(Medication.class);
     }
     
 }

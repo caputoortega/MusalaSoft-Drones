@@ -127,7 +127,7 @@ public class DroneService {
          * Init tasks
          */
         
-        BatteryLevelLogTask batteryTask = new BatteryLevelLogTask(getDataSource());
+        BatteryLevelLogTask batteryTask = new BatteryLevelLogTask();
         batteryTask.init();
 
         // Ensures Spark shuts down properly

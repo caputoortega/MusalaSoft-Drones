@@ -15,12 +15,11 @@ import ar.com.caputo.drones.database.model.Medication;
 import ar.com.caputo.drones.database.repo.MedicationRepository;
 import ar.com.caputo.drones.exception.InvalidBulkItemException;
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
-import ar.com.caputo.drones.exception.UnmetConditionsException;
 
 public class MedicationEndpoint extends RestfulEndpoint<Medication> {
 
     public MedicationEndpoint() {
-        super("/medications", new MedicationRepository(DroneService.getInstance().getDataSource()));
+        super("/medications", new MedicationRepository());
     }
 
     @Override

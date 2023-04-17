@@ -3,8 +3,6 @@ package ar.com.caputo.drones.task;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import com.j256.ormlite.support.ConnectionSource;
-
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.model.BatteryAuditLog;
 import ar.com.caputo.drones.database.repo.BatteryAuditLogRepository;
@@ -14,8 +12,8 @@ public class BatteryLevelLogTask {
     private BatteryAuditLogRepository repository;
     private boolean isShutdownLog = false;
 
-    public BatteryLevelLogTask(ConnectionSource source) {
-        this.repository = new BatteryAuditLogRepository(source);
+    public BatteryLevelLogTask() {
+        this.repository = new BatteryAuditLogRepository();
     }
 
     private Runnable task = () -> {
