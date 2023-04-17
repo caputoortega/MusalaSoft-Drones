@@ -75,7 +75,7 @@ public class BaseCrudRepository<T, ID> {
     }
 
     public boolean update(T model, ID id) throws SQLException {
-            return dao.updateId(model, id) == 1;
+            return dao.update(model) == 1 && dao.updateId(model, id) == 1;
     }
 
     public boolean delete(ID id) {
