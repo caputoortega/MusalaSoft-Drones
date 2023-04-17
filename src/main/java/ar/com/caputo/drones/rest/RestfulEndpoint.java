@@ -41,13 +41,16 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
     protected void registerRoutes() {
         baseGet();
         getObject();
-        addObject();
         bulkAdd();
+        addObject();
         updateObject();
         deleteObject();
     }
 
-
+    /**
+     * Retrieves a list with all the objects on the
+     * database plus their details
+     */
     public void baseGet() {
         get(BASE_ENDPOINT, (req, resp) -> {
             
@@ -57,6 +60,10 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
     }
 
 
+    /**
+     * Retrieves the details for a specific object
+     * on the database 
+     */
     public void getObject() {
         get(BASE_ENDPOINT + "/:id", (req, resp) -> {
 
@@ -69,6 +76,9 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
         });
     }
 
+    /**
+     * Adds an object to the database
+     */
     public abstract void addObject();
 
      /**
@@ -78,6 +88,9 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
      */
     public abstract void bulkAdd();
 
+    /**
+     * Update a specific object's fields from the database
+     */
     public void updateObject() {
         patch(BASE_ENDPOINT + "/:id", (req, resp) -> {
 
@@ -114,6 +127,7 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
         });
     }
 
+    // Delete a specific object from the database
     public void deleteObject() {
 
         delete(BASE_ENDPOINT + "/:id", PAYLOAD_ENCODING, (req, resp) -> {
