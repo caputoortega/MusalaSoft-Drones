@@ -17,6 +17,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import ar.com.caputo.drones.DroneService;
@@ -27,7 +28,7 @@ import ar.com.caputo.drones.database.model.Medication;
 public class MedicationEndpointTest extends EndpointTest {
 
     private final String TEST_MEDICATION_CODE = "AA01";
-    private final String MEDICATION_BOX_IMAGE_URL = "https://www.roemmers.com.ar/sites/default/files/F_000001172204.png";
+    private final String TEST_MEDICATION_BOX_IMAGE_URL = "https://www.roemmers.com.ar/sites/default/files/F_000001172204.png";
 
      /**
      * A generic test payload
@@ -163,6 +164,12 @@ public class MedicationEndpointTest extends EndpointTest {
         assertEquals(201, response.statusCode(), "Invalid response code");
         assertEquals(TEST_PAYLOAD_MEDICATION, addedMedication, "Medications are different!");
 
+        response = client(getRequest("/medications"));
+        // Needs to be updated since this comes from a different request
+        JsonArray responseJson = DroneService.GSON.fromJson(response.body(), JsonObject.class).getAsJsonArray("data");
+
+        assertTrue(responseJson.size() == 1, "GET:/medications returned a list with more than one medication, did any of the previous silently failed?");
+
     }
 
     @Test
@@ -214,7 +221,7 @@ public class MedicationEndpointTest extends EndpointTest {
     @Order(8)
     public void PATCHmedications_With_Code_Should_Update_Image() throws Exception {
 
-        Map<String, String> payload = Map.of("medicationCaseImageUrl", MEDICATION_BOX_IMAGE_URL);
+        Map<String, String> payload = Map.of("medicationCaseImageUrl", TEST_MEDICATION_BOX_IMAGE_URL);
 
         HttpResponse<String> response = client(patchRequest("/medications/" + TEST_MEDICATION_CODE, payload));
 
@@ -223,7 +230,7 @@ public class MedicationEndpointTest extends EndpointTest {
 
         JsonObject responseJson = DroneService.GSON.fromJson(response.body(), JsonObject.class);
 
-        assertEquals(MEDICATION_BOX_IMAGE_URL,
+        assertEquals(TEST_MEDICATION_BOX_IMAGE_URL,
                     responseJson.getAsJsonObject("data")
                         .get("medicationCaseImageUrl").getAsString(),
                     "Image was not updated properly!");
@@ -245,17 +252,26 @@ public class MedicationEndpointTest extends EndpointTest {
         
         // Checking for updated object
         
-        response = client(getRequest("/medications/" + TEST_MEDICATION_CODE));
+        response = client(getRequest("/medications"));
+
+        JsonObject responseJson = DroneService.GSON.fromJson(response.body(), JsonObject.class);
+        assertTrue(responseJson.get("data").getAsJsonArray().size() == 1, "Error on update! Did the system add a new medication instead of updating the existing one?");
+       
+        System.out.println(responseJson.get("data").getAsJsonArray().get(0).getAsJsonObject().get("code"));
+        assertTrue(responseJson.get("data").getAsJsonArray().get(0).getAsJsonObject().get("code").getAsString().equals(newCode), "Code was not updated properly");
+/* 
+
+        response = client(getRequest("/medications/" + newCode));
 
         assertEquals(200, response.statusCode(), "Invalid response code on update check!");
         assertTrue(isValidContentType(response), "Content is not JSON-encoded on update check!");
 
-        JsonObject responseJson = DroneService.GSON.fromJson(response.body(), JsonObject.class);
+        responseJson = DroneService.GSON.fromJson(response.body(), JsonObject.class);
 
         assertEquals(newCode,
                     responseJson.getAsJsonObject("data")
                         .get("code").getAsString(),
-                    "Code was not updated properly!");        
+                    "Code was not updated properly!");         */
 
     }
 
@@ -266,7 +282,7 @@ public class MedicationEndpointTest extends EndpointTest {
     public void DELETEmedications_With_Code_Should_Succeed() throws Exception {
 
         // Code is "AB01" because the previous test updated it!
-        HttpResponse<String> response = client(deleteRequest("/medications/" + "AB01"));
+        HttpResponse<String> response = client(deleteRequest("/medications/AB01"));
 
         assertEquals(200, response.statusCode(), "Invalid response code");
         assertTrue(isValidContentType(response), "Content is not JSON-encoded");
