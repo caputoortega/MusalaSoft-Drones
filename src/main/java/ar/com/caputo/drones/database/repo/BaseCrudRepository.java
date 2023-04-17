@@ -3,11 +3,11 @@ package ar.com.caputo.drones.database.repo;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
 import ar.com.caputo.drones.DroneService;
@@ -72,8 +72,15 @@ public class BaseCrudRepository<T, ID> {
 
 
     public List<?> addNewBulk(List<T> bulk) throws SQLException {
-      
-        return List.of(dao.create(bulk), bulk);
+      return TransactionManager.callInTransaction(DroneService.getInstance().getDataSource(), new Callable<List<?>>() {
+
+        @Override
+        public List<?> call() throws Exception {
+            return List.of(dao.create(bulk), bulk);
+        }
+
+      });
+        
     }
 
     public boolean update(T model, ID id) throws SQLException {
