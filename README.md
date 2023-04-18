@@ -344,21 +344,35 @@ erDiagram
 This design approach, although very simple to understand, contains major data
 normalisation and data representation problems that will exponentially scale with the application.
 
-The normalisation problem becomes clear when we look at fields such as `model` or `state` (from table `DRONE`) or `name` (from table `MEDICATION`). The fact that this fields are not normalised into their own tables presents us with two challenges:
+The normalisation problem becomes clear when we look at fields such as `model` or `state` (from table `DRONE`) 
+or `name` (from table `MEDICATION`). The fact that this fields are not normalised into their own tables presents
+us with two challenges:
 
-1) **Data inconsistency** introduced by *slightly* changed inputs -either conciously or accidentally-, such as capitalisation errors or typos.
+1) **Data inconsistency** introduced by *slightly* changed inputs -either conciously or accidentally-, such as
+ capitalisation errors or typos.
 
-    For fields like `model` and `state` this problem can be partially mitigated by using enumerators, but doesn't protect the database against it when it is modified directly instead of using the service.
+    For fields like `model` and `state` this problem can be partially mitigated by using enumerators, but doesn't 
+    protect the database against it when it is modified directly instead of using the service.
     
 2) **Data duplication** is clearly present when we look at the `name` field from table `MEDICATION`.
 
-    One might assume that this can easily be solved by the means of a `unique` constraint in the columns, but this is not a viable solution since the root issue is still present: **the data is not properly represented**. 
+    One might assume that this can easily be solved by the means of a `unique` constraint in the columns, but this
+    is not a viable solution since the root issue is still present: **the data is not properly represented**. 
 
-When we analise the requirements, a One-To-Many relationship between a `DRONE` and `MEDICATION` can quickly become caothic. For a **single** `MEDICATION` existance loaded to a **single** drone the design works flawlessly, but if we think of real-world scenarios where a company may have many existances of the same medication, or where the same medication needs to be loaded into different drones, this design approach falls apart in a wonderful combo for data-analysis and management disaster: multiple rows of the same medication have to be stored, same name but different codes, and updating any fields for that medication turns from a single database call to multiple calls -with the concern of not knowing whether all existances of the same medication have been updated-.
+When we analise the requirements, a One-To-Many relationship between a `DRONE` and `MEDICATION` can quickly become caothic. 
+For a **single** `MEDICATION` existance loaded to a **single** drone the design works flawlessly, but if we think of real-world
+scenarios where a company may have many existances of the same medication, or where the same medication needs to be loaded into
+different drones, this design approach falls apart in a wonderful combo for data-analysis and management disaster: multiple rows
+of the same medication have to be stored, same name but different codes, and updating any fields for that medication turns from
+a single database call to multiple calls -with the concern of not knowing whether all existances of the same medication have been
+updated-.
 
-For said reason, it is proposed that `MEDICATION` implements a Many-To-Many relationship with `DRONE` by using a intermediate table (`MEDICATION_EXISTANCE`) that represents an existance of a specific medication, that way, we can have a much better stock control and mitigate the problems stated above.
+For said reason, it is proposed that `MEDICATION` implements a Many-To-Many relationship with `DRONE` by using a intermediate table (`MEDICATION_EXISTANCE`) that represents an existance of a specific medication, that way, we can have a much better stock control
+and mitigate the problems stated above.
 
-Finally, and to reinforce the need for separate tables for `model` and `state`, the application is limited to the drone models and states described by the enumerators, requiring to alter the code ever so slightly when a new model or state -`LOW BATTERY` for instance- is required to be added. 
+Finally, and to reinforce the need for separate tables for `model` and `state`, the application is limited to the drone models and
+states described by the enumerators, requiring to alter the code ever so slightly when a new model or state -`LOW BATTERY` for instance-
+is required to be added. 
 
 Below is a new entity-relationship diagram with the proposed changes that will help future-proof the application:
 
@@ -404,15 +418,15 @@ erDiagram
 In aims to keep the service demonstration simple no security measurements such as authentication has been developed.
 This is, of course, for a publicly available service or a production environmennt a major concern.
 
-For said reason it is recommended to add a basic authentication or token-bearer authentication feature to prevent
+For said reason it is recommended to add a basic authentication or token-bearer authentication features to prevent
 unauthorised users and attackers gaining access and control over the service.
 
 It is also recommended the usage of a more secure transfer protocol such as HTTPS or even the addition of a reverse-proxy
 to encrypt the data in-transit.
 
-Despite the support for file-level encryption and column-level encryption from H2 databases, a good addition will be to
-migrate the project to a much more robust and secure database engine, with support for TDE and application-level encryption
-could be used, examples of that are MySQL/MariaDB, MS SQL, Oracle or PostgreSQL.
+Despite the support for file-level encryption and column-level encryption that H2 databases provide, a good addition will
+be to migrate the project to a much more robust and secure database engine, with support for TDE and application-level 
+encryption, examples of that are MySQL/MariaDB, MS SQL, Oracle or PostgreSQL.
 
 ## Performance improvements
 
@@ -420,12 +434,13 @@ As stated in the previous section, the service uses an H2 file-based database to
 performance by limiting the time-to-access and time-to-write to the drive's speeds but can also slow down significatively
 the response times if many operations are queued. 
 
-To reduce this response times a hybrid model could be used where the information is persisted into a traditional database but
-also cached to memory using in-memory caching systems such as *Redis* or *memcached* for the most significant and requested
-data, this way the service's database hit count can be lowered by retrieving the cached information instead.
+To reduce this response times a hybrid model could be implemented, where the information is persisted into a traditional database
+but also cached to memory -using in-memory caching systems such as *Redis* or *memcached*- for the most significant and commonly
+requested data, this way the service's database hit count can be lowered by retrieving the cached information instead and the
+overall performance is improved.
 
-With that implementation, in the best-case scenario the most up-to-date version of the information has already been cached
-and the user gets its response right-away. 
+With that implementation, in the best-case scenario the most up-to-date version of the information has already been cached and the
+user gets its response right-away. 
 
 ```mermaid
     sequenceDiagram
