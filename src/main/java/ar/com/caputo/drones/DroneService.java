@@ -37,6 +37,7 @@ public class DroneService {
     
     private static DroneService instance;
     private DroneEndpoint droneEnpoint;
+    private MedicationEndpoint medicationEndpoint;
     private DroneService() {}
 
     public static DroneService getInstance() {
@@ -120,7 +121,7 @@ public class DroneService {
          */
 
         this.droneEnpoint = new DroneEndpoint();
-        new MedicationEndpoint();
+        this.medicationEndpoint = new MedicationEndpoint();
         
 
         /*
@@ -182,6 +183,10 @@ public class DroneService {
 
     public DroneEndpoint getDroneEnpoint() {
         return droneEnpoint;
+    }
+
+    public MedicationEndpoint getMedicationEndpoint() {
+        return medicationEndpoint;
     }
 
     public long getLogInterval() {

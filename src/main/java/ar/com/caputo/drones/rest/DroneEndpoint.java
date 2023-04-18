@@ -2,6 +2,8 @@ package ar.com.caputo.drones.rest;
 
 import static spark.Spark.get;
 import static spark.Spark.post;
+import static spark.Spark.delete;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.model.Drone;
+import ar.com.caputo.drones.database.model.Medication;
 import ar.com.caputo.drones.database.repo.DroneRepository;
 import ar.com.caputo.drones.exception.InvalidBulkItemException;
 import ar.com.caputo.drones.exception.InvalidInputFormatException;
@@ -29,6 +32,10 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
         getAvailableDrones();
         getBatteryLevel();
         getItems();
+
+        loadItem();
+        unloadItem();
+
     }
 
     @Override
@@ -192,6 +199,95 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     public List<Drone> getAllDrones() {
         return repository.listAll();
+    }
+
+    public void loadItem() {
+
+        post(BASE_ENDPOINT + "/:id/items", (req, resp) -> {
+                
+            JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
+
+            String medicationCode = requestBody.get("code").getAsString();
+            
+            Drone targetDrone = repository.get(req.params(":id"));
+
+            if(targetDrone == null) {
+                resp.status(404);
+                return null;
+            }
+
+            Medication medication = DroneService.getInstance().getMedicationEndpoint().repository.get(medicationCode);
+
+            if(medication == null) {
+                resp.status(404);
+                return buildResponse("No medication with code ".concat(medicationCode).concat(" could be found!"));
+            }
+
+            if(medication.getAssociatedDrone() != null) {
+                if(medication.getAssociatedDrone().equals(targetDrone)) {
+                    resp.status(200);
+                    return buildResponse("Item ".concat(medicationCode).concat(" was already associated to this drone!"));
+                }
+
+                resp.status(400);
+                return buildResponse("Item ".concat(medicationCode).concat(" is already associated to another drone!"));
+            }
+
+            if(targetDrone.canHold(medication.getWeight())) {
+                medication.setAssociatedDrone(null);
+                resp.status(200);
+                return buildResponse("Item ".concat(medicationCode).concat(" was loaded to drone ".concat(targetDrone.id())));
+            } else {
+
+                resp.status(422);
+                return buildResponse("Item ".concat(medicationCode).concat( " exceeds weight limit for drone ".concat(targetDrone.id())));
+
+            }
+
+        });
+
+    }
+
+    public void unloadItem() {
+
+        delete(BASE_ENDPOINT + "/:id/items", (req, resp) -> {
+            
+            JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
+
+            String medicationCode = requestBody.get("code").getAsString();
+            
+            Drone targetDrone = repository.get(req.params(":id"));
+
+            if(targetDrone == null) {
+                resp.status(404);
+                return null;
+            }
+
+            Medication medication = DroneService.getInstance().getMedicationEndpoint().repository.get(medicationCode);
+
+            if(medication == null) {
+                resp.status(404);
+                return buildResponse("No medication with code ".concat(medicationCode).concat(" could be found!"));
+            }
+
+            if(medication.getAssociatedDrone() == null) {
+                resp.status(400);
+                return buildResponse("Item ".concat(medicationCode).concat(" doesn't have any drones associated!"));
+            }
+
+            if(medication.getAssociatedDrone().equals(targetDrone)) {
+                medication.setAssociatedDrone(null);
+                resp.status(200);
+                return buildResponse("Item ".concat(medicationCode).concat(" was unloaded from drone ".concat(targetDrone.id())));
+            } else {
+
+                resp.status(400);
+                return buildResponse("Item ".concat(medicationCode).concat( " is not associated to drone ".concat(targetDrone.id())));
+
+            }
+
+        });
+
     }
 
 }
