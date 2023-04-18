@@ -25,7 +25,7 @@ import ar.com.caputo.drones.database.model.Medication;
 
 @TestInstance(Lifecycle.PER_CLASS)
 @TestMethodOrder(org.junit.jupiter.api.MethodOrderer.OrderAnnotation.class)
-public class MedicationEndpointTest extends EndpointTest {
+public class A02_MedicationEndpointTest extends EndpointTest {
 
     private final String TEST_MEDICATION_CODE = "AA01";
     private final String TEST_MEDICATION_BOX_IMAGE_URL = "https://www.roemmers.com.ar/sites/default/files/F_000001172204.png";
@@ -42,49 +42,13 @@ public class MedicationEndpointTest extends EndpointTest {
     private final Medication TEST_PAYLOAD_MEDICATION;
 
 
-    protected MedicationEndpointTest() throws Exception {
+    protected A02_MedicationEndpointTest() throws Exception {
         super();
         this.TEST_PAYLOAD_MEDICATION = new Medication(
             (String)TEST_PAYLOAD.get("code"),
             (String)TEST_PAYLOAD.get("name"),
             (int)TEST_PAYLOAD.get("weight"));
     }
-
-    /**
-     * Populates the database with drones for
-     * the tests
-     * @throws Exception
-     */
-    @BeforeAll
-    public void populateDrones() throws Exception {
-
-
-        Map<String, List<Map<String, Object>>> payload = new HashMap<>();
-
-        payload.put("bulk",
-            List.of(
-                Map.of("serialNumber", UUID.randomUUID().toString(),
-                            "model", "LIGHTWEIGHT",
-                            "state", "IDLE",
-                            "weightLimit", 230,
-                            "batteryLevel", 43),
-                Map.of("serialNumber", UUID.randomUUID().toString(), 
-                            "model", "CRUISERWEIGHT",
-                            "state", "LOADING",
-                            "weightLimit", 470,
-                            "batteryLevel", 93),
-                Map.of("serialNumber", UUID.randomUUID().toString(), 
-                        "model", "HEAVYWEIGHT",
-                        "state", "DELIVERING",
-                        "weightLimit", 400,
-                        "batteryLevel",22)
-            )
-        );
-
-        client(postRequest("/drones/bulk", payload));
-
-    }
-
 
     @Test
     @DisplayName("GET:/medications should return an empty list")

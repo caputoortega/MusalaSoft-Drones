@@ -25,7 +25,7 @@ import ar.com.caputo.drones.exception.InvalidInputFormatException;
 
 @TestInstance(Lifecycle.PER_CLASS)
 @TestMethodOrder(org.junit.jupiter.api.MethodOrderer.OrderAnnotation.class)
-public class DroneEndpointTest extends EndpointTest {
+public class A01_DroneEndpointTest extends EndpointTest {
 
 
     /**
@@ -55,7 +55,7 @@ public class DroneEndpointTest extends EndpointTest {
      * use
      * @throws InvalidInputFormatException
      */
-    public DroneEndpointTest() throws Exception {
+    public A01_DroneEndpointTest() throws Exception {
         super();
         
         this.TEST_PAYLOAD_DRONE = new Drone(

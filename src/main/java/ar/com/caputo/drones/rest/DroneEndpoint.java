@@ -265,7 +265,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             } catch(ResourceNotFoundException ex) {
                 resp.status(404);
                 return buildResponse(ex.getMessage());
-            }
+        }
 
             if(medication.getAssociatedDrone() == null) {
                 resp.status(400);
