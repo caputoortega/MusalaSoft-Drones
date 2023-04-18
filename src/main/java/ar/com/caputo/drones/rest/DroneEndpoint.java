@@ -234,7 +234,8 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             }
 
             if(targetDrone.canHold(medication.getWeight())) {
-                medication.setAssociatedDrone(null);
+                medication.setAssociatedDrone(targetDrone);
+                DroneService.getInstance().getMedicationEndpoint().repository.update(medication);
                 resp.status(200);
                 return buildResponse("Item ".concat(medicationCode).concat(" was loaded to drone ".concat(targetDrone.id())));
             } else {
@@ -277,6 +278,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
             if(medication.getAssociatedDrone().equals(targetDrone)) {
                 medication.setAssociatedDrone(null);
+                DroneService.getInstance().getMedicationEndpoint().repository.update(medication);
                 resp.status(200);
                 return buildResponse("Item ".concat(medicationCode).concat(" was unloaded from drone ".concat(targetDrone.id())));
             } else {
