@@ -47,7 +47,7 @@ current directory under a file named `musalaDrones.mv.db` and `musalaDrones.trac
 
 *Note that we are using `sudo` since any ports below 1000 are only bindable by root.*
 
-## RESTful API
+# RESTful API
 
 The API is designed to allow multiple version of the service being available simultaneously, for said reason,
 the base endpoint structure looks as follows:
@@ -74,13 +74,13 @@ changing the version number:
 
 *Note: Version numbers are only mutable by altering the source code*.
 
-### Endpoints
+## Endpoints
 
 **!!! All endpoints are preceded by `/api/<version>` !!!**
 
 Current API version: `v1`
 
-#### Drone endpoints
+### Drone endpoints
 
 *Replace __sn__ with the drone serial* 
 
@@ -94,12 +94,119 @@ Current API version: `v1`
 | /drones/__sn__/battery     | GET    | Get battery level from a given drone              |
 | /drones/__sn__/items       | GET    | List all medications loaded on a given drone      |
 | /drones/__sn__/items       | POST   | Load medications into a given given drone         |
-| /drones/__sn__/items/bulk  | POST   | Bulk load medications into a given given drone    |
 | /drones/__sn__/items       | DELETE | Unload a medication from the given drone          |
 | /drones/__sn__             | DELETE | Delete the given drone from the database          |
 | /drones/__sn__             | PATCH  | Update the given drone's information              |
 
-#### Medication endpoints
+#### Payload structure for Drones
+
+The following are example payloads for ```/drones``` endpoints.
+The order in which the fields are loaded is not important.
+
+##### POST:`/drones`
+
+```json
+    {
+        "serialNumber": "abc",
+        "model": "LIGHTWEIGHT",
+        "state": "IDLE",
+        "weightLimit": 125,
+        "batteryLevel": 75
+    }
+```
+
+<hr>
+
+##### POST:`/drones/bulk`
+
+```json
+    {
+        "bulk": 
+         [
+           {
+            "serialNumber": "abc",
+            "model": "LIGHTWEIGHT",
+            "state": "IDLE",
+            "weightLimit": 125,
+            "batteryLevel": 75
+           },
+           {
+            "serialNumber": "def",
+            "model": "CRUISERWEIGHT",
+            "state": "DELIVERED",
+            "weightLimit": 383,
+            "batteryLevel": 43
+           },
+           {
+            "serialNumber": "ghi",
+            "model": "HEAVYWEIGHT",
+            "state": "DELIVERING",
+            "weightLimit": 488,
+            "batteryLevel": 64
+           }           
+         ]
+    }
+```
+
+<hr>
+
+#####  PATCH:`/drones/sn/`
+
+In this PATCH request you can include any of the information fields you want to update
+from the drone.
+
+**IMPORTANT: The drone load cannot be updated from this endpoint.** 
+
+Here are a couple examples:
+
+```json
+    {
+        "serialNumber":"AEEAF2"
+    }
+```
+This will update the serial number for the given drone to "`AEEAF2`".
+
+```json
+    {
+        "model":"HEAVYWEIGHT",
+        "weightLimit": 487
+    }
+```
+This will update the model for the given drone to "`HEAVYWEIGHT`" and its weight limit to `487`.
+
+```json
+    {
+        "serialNumber": "EEA2GG1",
+        "status": "IDLE",
+        "batteryLevel": 8
+    }
+```
+This will update the serial number for the given drone to "`EEA2GG1`", set its state to `IDLE` and its battery level to `8`.
+
+<hr>
+
+#####  POST:`/drones/sn/items`
+
+```json
+    {
+        "code": "AC331"
+    }
+```
+This will load medication with code "`AC331`" to the given drone if exists and is not assigned to another unit
+
+##### DELETE:`/drones/sn/items`
+
+```json
+    {
+        "code": "AC331"
+    }
+```
+This will unload/remove the medication with code "`AC331`" from the given drone if it was already loaded into the unit
+
+<hr>
+
+
+### Medication endpoints
 
 *Replace __code__ with the medication code* 
 
@@ -111,6 +218,84 @@ Current API version: `v1`
 | /medications/__code__  | GET    | Get general information from a given medication   |
 | /medications/__code__  | DELETE | Delete the given medication from the database     |
 | /medications/__code__  | PATCH  | Update the given medication's information         |
+
+#### Payload structure for Medications
+
+The following are example payloads for ```/medications``` endpoints.
+The order in which the fields are loaded is not important.
+
+##### POST:`/medications`
+
+```json
+    {
+        "code": "TBP250",
+        "name": "TERBIPRIN",
+        "weight": 38
+    }
+```
+
+<hr>
+
+##### POST:`/medications/bulk`
+
+```json
+    {
+        "bulk": 
+         [
+           {
+            "code":"CD125",
+            "name":"CRODENU",
+            "weight": 21
+           },
+           {
+            "code":"BXN1000",
+            "name":"BEXRANON",
+            "weight": 73
+           },
+           {
+            "code":"ADS500",
+            "name":"ALDACSONE",
+            "weight": 46
+           }           
+         ]
+    }
+```
+
+
+#####  PATCH:`/medications/code/`
+
+In this PATCH request you can include any of the information fields you want to update
+from the medication.
+
+**IMPORTANT: Assigning and updating the drone in which the medication is loaded cannot be done from this endpoint.** 
+
+Here are a couple examples:
+
+```json
+    {
+        "code":"CDX150"
+    }
+```
+This will update the code for the given medication to "`CDX150`".
+
+```json
+    {
+        "weight":33,
+        "name": "CRODENUX"
+    }
+```
+This will update the name for the given medication to "`CRODENUX`" and its weight to `33`.
+
+```json
+    {
+        "code": "CDXD500",
+        "name": "CRODENUX_DUO",
+        "weight": 89
+    }
+```
+This will update the code for the given medication to "`CDXD500`", set its name to `CRODENUX_DUO` and its weight to `89`.
+
+<hr>
 
 # Testing
 
@@ -194,3 +379,58 @@ erDiagram
     }
     
 ```
+
+## Service security
+
+In aims to keep the service demonstration simple no security measurements such as authentication has been developed.
+This is, of course, for a publicly available service or a production environmennt a major concern.
+
+For said reason it is recommended to add a basic authentication or token-bearer authentication feature to prevent
+unauthorised users and attackers gaining access and control over the service.
+
+It is also recommended the usage of a more secure transfer protocol such as HTTPS or even the addition of a reverse-proxy
+to encrypt the data in-transit.
+
+Despite the support for file-level encryption and column-level encryption from H2 databases, a good addition will be to
+migrate the project to a much more robust and secure database engine, with support for TDE and application-level encryption
+could be used, examples of that are MySQL/MariaDB, MS SQL, Oracle or PostgreSQL.
+
+## Performance improvements
+
+As stated in the previous section, the service uses an H2 file-based database to store its information. This not only impacts
+performance by limiting the time-to-access and time-to-write to the drive's speeds but can also slow down significatively
+the response times if many operations are queued. 
+
+To reduce this response times a hybrid model could be used where the information is persisted into a traditional database but
+also cached to memory using in-memory caching systems such as *Redis* or *memcached* for the most significant and requested
+data, this way the service's database hit count can be lowered by retrieving the cached information instead.
+
+With that implementation, in the best-case scenario the most up-to-date version of the information has already been cached
+and the user gets its response right-away. 
+
+<center>
+
+```mermaid
+    sequenceDiagram
+    Client->>Cache: Retrieve data
+    Cache->>Cache: Check for cache hit/miss
+    Cache-->>Client: Cached data
+```
+
+</center>
+
+In the worst-case scenario the cache system contains outdated information or no information at all, which will require a couple
+extra steps for database retrieval and cache update.
+
+<center>
+
+```mermaid
+    sequenceDiagram
+    Client->>Cache: Retrieve data
+    Cache->>Cache: Check for cache hit/miss
+    Cache->>Database: Retrieve data
+    Database-->>Cache: Uncached data
+    Cache->>Cache: Update/store uncached data
+    Cache-->>Client: Cached data
+```
+</center>
