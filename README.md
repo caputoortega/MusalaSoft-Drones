@@ -354,7 +354,7 @@ The normalisation problem becomes clear when we look at fields such as `model` o
 
     One might assume that this can easily be solved by the means of a `unique` constraint in the columns, but this is not a viable solution since the root issue is still present: **the data is not properly represented**. 
 
-When we analise the requirements, a One-To-Many relationship between a `DRONE` and `MEDICATION` can quickly become caothic. For a **single** `MEDICATION` existance loaded to a **single** drone the design works flawlessly, but if we think of cases where the company may have many existances of the same medication, or where the same medication needs to be loaded to different drones, this design approach falls apart in a wonderful combo for data-analysis and management disaster: multiple rows of the same medication have to be stored, same name but different codes, and updating any fields for that medication turns from a single database call to multiple calls -with the concern of not knowing whether all existances of the same medication have been updated-.
+When we analise the requirements, a One-To-Many relationship between a `DRONE` and `MEDICATION` can quickly become caothic. For a **single** `MEDICATION` existance loaded to a **single** drone the design works flawlessly, but if we think of real-world scenarios where a company may have many existances of the same medication, or where the same medication needs to be loaded into different drones, this design approach falls apart in a wonderful combo for data-analysis and management disaster: multiple rows of the same medication have to be stored, same name but different codes, and updating any fields for that medication turns from a single database call to multiple calls -with the concern of not knowing whether all existances of the same medication have been updated-.
 
 For said reason, it is proposed that `MEDICATION` implements a Many-To-Many relationship with `DRONE` by using a intermediate table (`MEDICATION_EXISTANCE`) that represents an existance of a specific medication, that way, we can have a much better stock control and mitigate the problems stated above.
 
@@ -392,7 +392,7 @@ erDiagram
         string imageUrl
     }
     MEDICATION_EXISTANCE {
-        int existanceId
+        int id
         string medication_code
         string drone_sn
     }
