@@ -317,12 +317,11 @@ remove that functionality by editing the [`EndpointTest#teardown()`](https://git
 # Notes on possible future design improvements
 
 
-## WIP
+## Database design
+
+Below it is provided an entity-relationship diagram of the database design as-is right now:
 
 ```mermaid
----
-title: Current design   
----
 erDiagram
     DRONE o|--o{ MEDICATION : contains 
     
@@ -342,14 +341,33 @@ erDiagram
     
 ```
 
+This design approach, although very simple to understand, contains major data
+normalisation and data representation problems that will exponentially scale with the application.
+
+The normalisation problem becomes clear when we look at fields such as `model` or `state` (from table `DRONE`) or `name` (from table `MEDICATION`). The fact that this fields are not normalised into their own tables presents us with two challenges:
+
+1) **Data inconsistency** introduced by *slightly* changed inputs -either conciously or accidentally-, such as capitalisation errors or typos.
+
+    For fields like `model` and `state` this problem can be partially mitigated by using enumerators, but doesn't protect the database against it when it is modified directly instead of using the service.
+    
+2) **Data duplication** is clearly present when we look at the `name` field from table `MEDICATION`.
+
+    One might assume that this can easily be solved by the means of a `unique` constraint in the columns, but this is not a viable solution since the root issue is still present: **the data is not properly represented**. 
+
+When we analise the requirements, a One-To-Many relationship between a `DRONE` and `MEDICATION` can quickly become caothic. For a **single** `MEDICATION` existance loaded to a **single** drone the design works flawlessly, but if we think of cases where the company may have many existances of the same medication, or where the same medication needs to be loaded to different drones, this design approach falls apart in a wonderful combo for data-analysis and management disaster: multiple rows of the same medication have to be stored, same name but different codes, and updating any fields for that medication turns from a single database call to multiple calls -with the concern of not knowing whether all existances of the same medication have been updated-.
+
+For said reason, it is proposed that `MEDICATION` implements a Many-To-Many relationship with `DRONE` by using a intermediate table (`MEDICATION_EXISTANCE`) that represents an existance of a specific medication, that way, we can have a much better stock control and mitigate the problems stated above.
+
+Finally, and to reinforce the need for separate tables for `model` and `state`, the application is limited to the drone models and states described by the enumerators, requiring to alter the code ever so slightly when a new model or state -`LOW BATTERY` for instance- is required to be added. 
+
+Below is a new entity-relationship diagram with the proposed changes that will help future-proof the application:
+
+
 ```mermaid
----
-title: Normalised proposed design   
----
 erDiagram
     DRONE o|--o{ MEDICATION_EXISTANCE : ""
-    DRONE ||--o{ DRONE_MODEL : ""
-    DRONE ||--o{ DRONE_STATE : ""
+    DRONE }o--|| DRONE_MODEL : ""
+    DRONE }o--|| DRONE_STATE : ""
     MEDICATION_EXISTANCE }o--|| MEDICATION : ""
     
     DRONE {
@@ -374,6 +392,7 @@ erDiagram
         string imageUrl
     }
     MEDICATION_EXISTANCE {
+        int existanceId
         string medication_code
         string drone_sn
     }
@@ -408,8 +427,6 @@ data, this way the service's database hit count can be lowered by retrieving the
 With that implementation, in the best-case scenario the most up-to-date version of the information has already been cached
 and the user gets its response right-away. 
 
-<center>
-
 ```mermaid
     sequenceDiagram
     Client->>Cache: Retrieve data
@@ -417,12 +434,8 @@ and the user gets its response right-away.
     Cache-->>Client: Cached data
 ```
 
-</center>
-
 In the worst-case scenario the cache system contains outdated information or no information at all, which will require a couple
 extra steps for database retrieval and cache update.
-
-<center>
 
 ```mermaid
     sequenceDiagram
@@ -433,4 +446,3 @@ extra steps for database retrieval and cache update.
     Cache->>Cache: Update/store uncached data
     Cache-->>Client: Cached data
 ```
-</center>
