@@ -7,9 +7,13 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 
-public class IntegrationTest extends EndpointTest {
+public class B01_IntegrationTest extends EndpointTest {
 
-     /**
+     protected B01_IntegrationTest() throws Exception {
+        super();
+    }
+
+    /**
      * Populates the database with drones for
      * the tests
      * @throws Exception
@@ -18,7 +22,7 @@ public class IntegrationTest extends EndpointTest {
     public void populateDrones() throws Exception {
 
 
-        Map<String, List<Map<String, Object>>> payload = new HashMap()<>();
+        Map<String, List<Map<String, Object>>> payload = new HashMap<>();
 
         payload.put("bulk",
             List.of(

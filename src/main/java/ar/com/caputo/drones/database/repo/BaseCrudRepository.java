@@ -83,6 +83,7 @@ public class BaseCrudRepository<T extends BaseEntityModel, ID> {
         
     }
 
+    @SuppressWarnings("unchecked")
     public boolean update(T model) throws SQLException {
 
         if(model.futureId() != null & !model.id().equals(model.futureId())) {
