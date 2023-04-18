@@ -209,18 +209,16 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
             String medicationCode = requestBody.get("code").getAsString();
             
-            Drone targetDrone = repository.get(req.params(":id"));
+            Drone targetDrone;
+            Medication medication;
+            try { 
 
-            if(targetDrone == null) {
+                targetDrone = repository.get(req.params(":id"));
+                medication = DroneService.getInstance().getMedicationEndpoint().repository.get(medicationCode);
+
+            } catch(ResourceNotFoundException ex) {
                 resp.status(404);
-                return null;
-            }
-
-            Medication medication = DroneService.getInstance().getMedicationEndpoint().repository.get(medicationCode);
-
-            if(medication == null) {
-                resp.status(404);
-                return buildResponse("No medication with code ".concat(medicationCode).concat(" could be found!"));
+                return buildResponse(ex.getMessage());
             }
 
             if(medication.getAssociatedDrone() != null) {
@@ -257,18 +255,16 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
             String medicationCode = requestBody.get("code").getAsString();
             
-            Drone targetDrone = repository.get(req.params(":id"));
+            Drone targetDrone;
+            Medication medication;
+            try { 
 
-            if(targetDrone == null) {
+                targetDrone = repository.get(req.params(":id"));
+                medication = DroneService.getInstance().getMedicationEndpoint().repository.get(medicationCode);
+
+            } catch(ResourceNotFoundException ex) {
                 resp.status(404);
-                return null;
-            }
-
-            Medication medication = DroneService.getInstance().getMedicationEndpoint().repository.get(medicationCode);
-
-            if(medication == null) {
-                resp.status(404);
-                return buildResponse("No medication with code ".concat(medicationCode).concat(" could be found!"));
+                return buildResponse(ex.getMessage());
             }
 
             if(medication.getAssociatedDrone() == null) {
