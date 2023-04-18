@@ -92,6 +92,7 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
      * Update a specific object's fields from the database
      */
     public void updateObject() {
+        
         patch(BASE_ENDPOINT + "/:id", (req, resp) -> {
 
             JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class);
@@ -121,7 +122,7 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
                 return buildResponse(ex.getMessage()); // this was sanitised
             } catch (RequestProcessingException ex) {
                 resp.status(500);
-                return buildResponse(ex.getMessage()); // this was sanitised
+                return buildResponse(ex.getMessage());
             }
 
         });

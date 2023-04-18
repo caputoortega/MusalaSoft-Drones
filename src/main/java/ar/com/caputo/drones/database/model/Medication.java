@@ -28,12 +28,14 @@ public class Medication extends BaseEntityModel {
      */
     private transient final String NAME_REGEX = "[A-Za-z0-9-_]+";
 
+    private transient final String FORMAT_REGEX = "(JPEG|PNG|GIF)";
+
     /**
      * {@code code} attribute is being forced to be updated
      * and retrieved using getters and setters instead of the
      * default reflection method to check for invalid inputs.
      */
-    @DatabaseField(id = true, columnDefinition = "VARCHAR(255) NOT NULL", uniqueIndex = true, unique = true, useGetSet = true)
+    @DatabaseField(id = true, columnDefinition = "VARCHAR(255) NOT NULL", unique = true, uniqueIndex = true, useGetSet = true)
     private String code;
 
     /**
@@ -61,7 +63,7 @@ public class Medication extends BaseEntityModel {
         this.ignoredUpdateAttributes = Set.of("associatedDrone");
     }
 
-    public Medication(String code, String name, int weight) throws InvalidInputFormatException {
+    public Medication(String code, String name, int weight) {
 
         this.ignoredUpdateAttributes = Set.of("associatedDrone");
         setCode(code);
@@ -81,16 +83,21 @@ public class Medication extends BaseEntityModel {
      * @param code the code for the medication
      * @throws InvalidInputFormatException
      */
-    public void setCode(String code) throws InvalidInputFormatException {
+    public void setCode(String code) {
+
+
+        if(validateId(code)) this.code = code;
+
+    }
+
+    public final boolean validateId(String id) {
 
         // Uppercasing the code in case the user forgot :)
-        code = code.toUpperCase();
-
-        if(!Pattern.matches(CODE_REGEX, code)) 
-            throw new InvalidInputFormatException(code, CODE_REGEX);
-
-        this.code = code;
-
+        id = id.toUpperCase();
+        
+        if(Pattern.matches(CODE_REGEX, id))
+            return true;
+        else throw new InvalidInputFormatException(id, CODE_REGEX);
     }
 
     public String getName() {
@@ -137,11 +144,12 @@ public class Medication extends BaseEntityModel {
         try {
             URL url = new URL(imageUrl);
             InputStream in = url.openStream();
-            String imageFormat =  Imaging.getImageInfo(in, null).getFormatName();
-            if(imageFormat.equals("JPEG") || imageFormat.equals("PNG") || imageFormat.equals("GIF")) 
+            String imageFormat =  Imaging.getImageInfo(in.readAllBytes()).getFormat().getDefaultExtension().toUpperCase();
+            if(imageFormat.matches(FORMAT_REGEX)) 
                 this.medicationCaseImageUrl = imageUrl;
             else throw new InvalidInputFormatException(imageUrl, "JPEG, PNG, GIF");
         } catch (IOException | ImageReadException ex) {
+            ex.printStackTrace();
             throw new ResourceNotFoundException(imageUrl);
         }
 

@@ -12,6 +12,7 @@ import com.j256.ormlite.table.TableUtils;
 
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.model.BaseEntityModel;
+import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
@@ -32,7 +33,7 @@ public class BaseCrudRepository<T extends BaseEntityModel, ID> {
         }
     }
 
-    public T get(ID id) throws ResourceNotFoundException {
+    public T get(ID id) {
 
         try { 
             
@@ -42,10 +43,8 @@ public class BaseCrudRepository<T extends BaseEntityModel, ID> {
             else throw new ResourceNotFoundException(id, type);
             
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            throw new RequestProcessingException(ex.getCause().getMessage());
         }
-
-        return null;
 
     }
     

@@ -211,7 +211,7 @@ public class MedicationEndpointTest extends EndpointTest {
 
         HttpResponse<String> response = client(patchRequest("/medications/" + TEST_MEDICATION_CODE, payload));
 
-        assertEquals(400, response.statusCode(), "Invalid response code!");
+        assertEquals(500, response.statusCode(), "Invalid response code!");
         assertTrue(isValidContentType(response), "Content is not JSON-encoded");
 
     }

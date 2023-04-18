@@ -3,6 +3,7 @@ package ar.com.caputo.drones.database.model;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import com.j256.ormlite.field.DatabaseField;
 
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.exception.RequestProcessingException;
+import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
 
 public abstract class BaseEntityModel {
@@ -116,7 +118,7 @@ public abstract class BaseEntityModel {
         } catch (IllegalArgumentException ex) {
             throw new UnmetConditionsException(ex.getCause().getMessage());
         } catch (IllegalAccessException | InvocationTargetException ex) {
-            throw new RequestProcessingException(ex.getMessage());
+            throw new RequestProcessingException(ex.getCause().getMessage());
         }
 
     }
