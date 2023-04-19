@@ -59,8 +59,8 @@ public class B01_IntegrationTest extends EndpointTest {
                        )
         );
 
-        client(postRequest("/drones/bulk", dronePayload));
-        client(postRequest("/medications/bulk", medicationPayload));
+        client(postRequest("/drones/bulk/", dronePayload));
+        client(postRequest("/medications/bulk/", medicationPayload));
 
     }
 
