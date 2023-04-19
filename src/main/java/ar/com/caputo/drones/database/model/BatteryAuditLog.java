@@ -1,13 +1,10 @@
 package ar.com.caputo.drones.database.model;
 
-import java.lang.System.Logger.Level;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
-
-import ar.com.caputo.drones.DroneService;
 
 public class BatteryAuditLog extends BaseEntityModel {
 
