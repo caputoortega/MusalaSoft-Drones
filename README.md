@@ -31,19 +31,21 @@ or by the means of the `java` command in a prompt, being the latest one encourag
  - Java 17
 
 ### Parameters
-| Parameter | Description                    | Value type | Aliases | Default value | Example usage           |
-|-----------|--------------------------------|------------|---------|---------------|-------------------------|
-| --apiHost | Binding IP address for the API | String     | -h      | 0.0.0.0       | --apiHost:187.22.61.223 |
-| --apiPort | Binding port for the API       | Integer    | -p      | 8080          | --apiPort:80            |
-| --dbName  | Database file name             | String     | -db     | drones        | --dbName:musalaDrones   |
+| Parameter      | Description                              | Value type | Aliases | Default value | Example usage           |
+|----------------|------------------------------------------|------------|---------|---------------|-------------------------|
+| --apiHost      | Binding IP address for the API           | String     | -h      | 0.0.0.0       | --apiHost:187.22.61.223 |
+| --apiPort      | Binding port for the API                 | Integer    | -p      | 8080          | --apiPort:80            |
+| --dbName       | Database file name                       | String     | -db     | drones        | --dbName:musalaDrones   |
+| --logInterval  | Time between battery level checks (secs) | Long       | -li     | 240           | --logInterval:15        |
 
 #### Example run command with arguments:
 ```console
-sudo java --jar drones-1.0.jar --apiHost:187.22.61.223 --apiPort:80 --dbName:musalaDrones
+sudo java --jar drones-1.0.jar --apiHost:187.22.61.223 --apiPort:80 --dbName:musalaDrones --logInterval:15
 ```
 
 This will start the service and bind it to the address `187.22.61.223:80`, and all information will be stored in the
-current directory under a file named `musalaDrones.mv.db` and `musalaDrones.trace.db`.
+current directory under a file named `musalaDrones.mv.db` and `musalaDrones.trace.db`. In addition, the service will 
+check every 15 seconds the drones battery level and reset any of them on an invalid state
 
 *Note that we are using `sudo` since any ports below 1000 are only bindable by root.*
 
@@ -88,8 +90,8 @@ Current API version: `v1`
 |----------------------------|--------|---------------------------------------------------|
 | /drones                    | GET    | List all existing drones                          |
 | /drones                    | POST   | Add a drone to the database                       |
-| /drones/bulk               | POST   | Bulk add drones to the database                   |
-| /drones/available          | GET    | List all drones available for loading medications |
+| /drones/bulk/              | POST   | Bulk add drones to the database                   |
+| /drones/available/         | GET    | List all drones available for loading medications |
 | /drones/__sn__             | GET    | Get general information from a given drone        |
 | /drones/__sn__/battery     | GET    | Get battery level from a given drone              |
 | /drones/__sn__/items       | GET    | List all medications loaded on a given drone      |
@@ -97,6 +99,11 @@ Current API version: `v1`
 | /drones/__sn__/items       | DELETE | Unload a medication from the given drone          |
 | /drones/__sn__             | DELETE | Delete the given drone from the database          |
 | /drones/__sn__             | PATCH  | Update the given drone's information              |
+
+**IMPORTANT**: Please note that endpoints `/drones/available/` and `/drones/bulk/` **contains a trailing slash!**
+This is due to limitations with the SparkJava library which will treat anything without a trailing slash as an ID,
+this way we can differentiate an argument endpoint (such as `/drones/__sn__`) from special endpoints such as the
+above mentioned. 
 
 #### Payload structure for Drones
 
@@ -117,7 +124,7 @@ The order in which the fields are loaded is not important.
 
 <hr>
 
-##### POST:`/drones/bulk`
+##### POST:`/drones/bulk/`
 
 ```json
     {
@@ -214,10 +221,17 @@ This will unload/remove the medication with code "`AC331`" from the given drone 
 |------------------------|--------|---------------------------------------------------|
 | /medications           | GET    | List all existing medications                     |
 | /medications           | POST   | Add a medication to the database                  |
-| /medications/bulk      | POST   | Bulk add medication to the database               |
+| /medications/bulk/     | POST   | Bulk add medication to the database               |
 | /medications/__code__  | GET    | Get general information from a given medication   |
 | /medications/__code__  | DELETE | Delete the given medication from the database     |
 | /medications/__code__  | PATCH  | Update the given medication's information         |
+
+
+**IMPORTANT**: Please note that endpoint `/medications/bulk/` **contains a trailing slash!**
+This is due to limitations with the SparkJava library which will treat anything without a trailing slash as an ID,
+this way we can differentiate an argument endpoint (such as `/medications/__code__`) from special endpoints such as the
+above mentioned. 
+
 
 #### Payload structure for Medications
 
@@ -236,7 +250,7 @@ The order in which the fields are loaded is not important.
 
 <hr>
 
-##### POST:`/medications/bulk`
+##### POST:`/medications/bulk/`
 
 ```json
     {
