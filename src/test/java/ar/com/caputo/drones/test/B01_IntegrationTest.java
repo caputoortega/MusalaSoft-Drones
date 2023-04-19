@@ -22,9 +22,10 @@ public class B01_IntegrationTest extends EndpointTest {
     public void populateDrones() throws Exception {
 
 
-        Map<String, List<Map<String, Object>>> payload = new HashMap<>();
+        Map<String, List<Map<String, Object>>> dronePayload = new HashMap<>();
+        Map<String, List<Map<String, Object>>> medicationPayload = new HashMap<>();
 
-        payload.put("bulk",
+        dronePayload.put("bulk",
             List.of(
                 Map.of("serialNumber", UUID.randomUUID().toString(),
                             "model", "LIGHTWEIGHT",
@@ -44,7 +45,22 @@ public class B01_IntegrationTest extends EndpointTest {
             )
         );
 
-        client(postRequest("/drones/bulk", payload));
+        medicationPayload.put("bulk",
+                List.of(
+                        Map.of("code", "CD125",
+                                "name", "CRODENU",
+                                "weight", 21),
+                        Map.of("code", "BXN1000",
+                                "name", "BEXRANON",
+                                "weight", 73),
+                        Map.of("code", "ADS500",
+                                "name", "ALDACSONE",
+                                "weight", 46)
+                       )
+        );
+
+        client(postRequest("/drones/bulk", dronePayload));
+        client(postRequest("/medications/bulk", medicationPayload));
 
     }
 

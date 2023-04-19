@@ -241,6 +241,40 @@ public class Drone extends BaseEntityModel {
         return (getTotalWeight() - medicationOldWeight) + medicationNewWeight <= weightLimit;
     }
 
+    /**
+     * Checks if the drone state is valid for load
+     * and their battery level is above 25.
+     * Valid states for loading items are {@link State#IDLE}
+     * and {@link State#LOADING}.
+     * @return whether the drone can be accept a new load loaded
+     */
+    public boolean canBeLoaded() {
+        return (this.state == State.IDLE || this.state == State.LOADING) && batteryLevel > 25; 
+    }
+
+    /**
+     * Checks if the current drone state is a valid
+     * state for unloading items.
+     * This states are: {@link State#IDLE}, {@link State#LOADING},
+     * {@link State#LOADED} and {@link State#DELIVERED}
+     * @return whether the drone state is valid to unload a medication
+     */
+    public boolean canBeUnloaded() {
+
+        switch(this.state) {
+            case IDLE:
+            case LOADING:
+            case LOADED:
+            case DELIVERED:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean shouldStateBeReset() {
+        return batteryLevel < 25 && (this.state == State.LOADING || this.state == State.LOADED);
+    }
 
 
     @Override
@@ -248,12 +282,6 @@ public class Drone extends BaseEntityModel {
 
     @Override
     public boolean validateId(String id) {
-       /*
-         * Making sure the serialNumber is not "available", so it
-         * does not collide with the "/api/version/drones/available"
-         * endpoint
-         */
-        if(id.equals("available")) throw new InvalidInputFormatException(id, "any string except \"available\"");
 
         /*
           * Making sure the serialNumber doesn't contain more than

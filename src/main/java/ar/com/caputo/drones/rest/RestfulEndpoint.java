@@ -5,6 +5,7 @@ import static spark.Spark.patch;
 import static spark.Spark.delete;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import com.google.gson.JsonObject;
 import ar.com.caputo.drones.DroneService;
 import ar.com.caputo.drones.database.model.BaseEntityModel;
 import ar.com.caputo.drones.database.repo.BaseCrudRepository;
+import ar.com.caputo.drones.exception.InvalidInputFormatException;
 import ar.com.caputo.drones.exception.RequestProcessingException;
 import ar.com.caputo.drones.exception.ResourceNotFoundException;
 import ar.com.caputo.drones.exception.UnmetConditionsException;
@@ -82,7 +84,8 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
     public abstract void addObject();
 
      /**
-     * This endpoint is an all-or-nothing endpoint,
+     * Add several objects to the database.
+     * This endpoint is an <b>all-or-nothing</b> endpoint,
      * if any error is present on the payload, the entire
      * bulk is rejected. 
      */
@@ -117,7 +120,7 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
             } catch (ResourceNotFoundException ex) {
                 resp.status(404);
                 return null;
-            } catch (UnmetConditionsException | SQLException ex) {
+            } catch (UnmetConditionsException | InvalidInputFormatException | SQLException ex) {
                 resp.status(400);
                 return buildResponse(ex.getMessage()); // this was sanitised
             } catch (RequestProcessingException ex) {
@@ -128,7 +131,9 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
         });
     }
 
-    // Delete a specific object from the database
+    /**
+     * Delete a specific object from the database
+    */
     public void deleteObject() {
 
         delete(BASE_ENDPOINT + "/:id", PAYLOAD_ENCODING, (req, resp) -> {
@@ -156,12 +161,27 @@ public abstract class RestfulEndpoint<T extends BaseEntityModel> {
         });
     }
 
+    /**
+     * Build a standardised JSON response.
+     * This response contains a single key {@code data}
+     * that contains all the object's information
+     */
     protected final String buildResponse(Object data) {
         return DroneService.GSON.toJson(Map.of("data", data));
     }
 
-    protected final String buildBulkResponse(int bulkSize, Object data) {
+    /**
+     * Build a standardised JSON bulk response.
+     * This response contains two keys, {@code bulkSize},
+     * which is the size of objects from the bulk response,
+     * and {@code data}, which is the list of objects from
+     * the bulk
+     */
+    protected final String buildBulkResponse(int bulkSize, List<?> data) {
         return DroneService.GSON.toJson(Map.of("bulkSize", bulkSize, "data", data));
     }
 
+    public BaseCrudRepository<T, String> getRepository() {
+        return this.repository;
+    }
 }

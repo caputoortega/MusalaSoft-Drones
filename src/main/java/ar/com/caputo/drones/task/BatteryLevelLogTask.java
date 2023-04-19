@@ -1,5 +1,6 @@
 package ar.com.caputo.drones.task;
 
+import java.lang.System.Logger.Level;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -18,8 +19,18 @@ public class BatteryLevelLogTask {
 
     private Runnable task = () -> {
 
-        DroneService.getInstance().getDroneEnpoint().getAllDrones().forEach(drone -> {
-            repository.addNew(new BatteryAuditLog(drone, isShutdownLog));
+        DroneService.getInstance().getDroneEnpoint().getRepository().listAll().forEach(drone -> {
+
+            // Reset the drone's state if needed 
+            if(drone.shouldStateBeReset()) {
+                if(DroneService.getInstance().getDroneEnpoint().getRepository().resetState(drone)) 
+                DroneService.getInstance().getBatteryAuditLogger().log(Level.INFO, "State for drone " + drone.getSerialNumber() + " was reset due to low battery level");   
+            }
+
+            if(repository.addNew(new BatteryAuditLog(drone, isShutdownLog))) 
+             DroneService.getInstance().getBatteryAuditLogger().log(Level.INFO, "Logged battery level for drone " + drone.getSerialNumber() + " (" + drone.getBatteryLevel() + "%)");   
+
+
         });
 
     };

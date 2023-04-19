@@ -32,7 +32,7 @@ public class DroneService {
     /**
      * 4 minutes default logInterval for {@link BatteryLevelLogTask}
      */
-    private long logInterval = 240;
+    private long logInterval = 240L;
     private final Logger BATTERY_AUDIT_LOGGER = System.getLogger("BATTERY AUDIT LOG");
     
     private static DroneService instance;
@@ -50,7 +50,7 @@ public class DroneService {
         String apiAddress = null;
         int apiPort = -1;
         String dbName = null;
-        int logInterval = 240;
+        long logInterval = -1L;
 
         if(args.length > 0) {
 
@@ -86,9 +86,9 @@ public class DroneService {
     
     }
 
-    private void configure(final String API_ADDRESS, final int API_PORT, final String USER_PROVIDED_DB_NAME, final int LOG_INTERVAL) {
+    private void configure(final String API_ADDRESS, final int API_PORT, final String USER_PROVIDED_DB_NAME, final long LOG_INTERVAL) {
 
-        this.logInterval = LOG_INTERVAL;
+        this.logInterval = LOG_INTERVAL != -1 ? LOG_INTERVAL : this.logInterval;
 
         String dbName = null; 
         if(USER_PROVIDED_DB_NAME != null) dbName = USER_PROVIDED_DB_NAME.strip();

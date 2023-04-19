@@ -109,6 +109,5 @@ public class BaseCrudRepository<T extends BaseEntityModel, ID> {
     public Dao<T, ID> getDao() {
         return this.dao;
     }
-
     
 }

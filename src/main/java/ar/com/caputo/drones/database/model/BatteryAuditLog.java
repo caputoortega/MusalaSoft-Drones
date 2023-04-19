@@ -43,9 +43,6 @@ public class BatteryAuditLog extends BaseEntityModel {
         this.loggedBatteryLevel = drone.getBatteryLevel();
         this.timestamp = Timestamp.valueOf(LocalDateTime.now());
         this.shutdownLog = isShutdownLog;
-
-        DroneService.getInstance().getBatteryAuditLogger().log(Level.INFO, "Logged battery level for drone " + drone.getSerialNumber() + " (" + drone.getBatteryLevel() + "%)");        
-
     }
 
     public int getId() {

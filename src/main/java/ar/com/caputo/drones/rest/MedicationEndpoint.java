@@ -80,7 +80,7 @@ public class MedicationEndpoint extends RestfulEndpoint<Medication> {
     @Override
     public void bulkAdd() {
 
-        post(BASE_ENDPOINT + "/bulk", PAYLOAD_ENCODING, (req, resp) -> {
+        post(BASE_ENDPOINT + "/bulk/", PAYLOAD_ENCODING, (req, resp) -> {
 
             JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class); 
             JsonArray bulkData = requestBody.get("bulk").getAsJsonArray();

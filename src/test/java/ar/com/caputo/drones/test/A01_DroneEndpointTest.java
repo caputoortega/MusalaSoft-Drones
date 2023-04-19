@@ -319,7 +319,7 @@ public class A01_DroneEndpointTest extends EndpointTest {
     }
 
     @Test
-    @DisplayName("POST:/drones/bulk should fail registering drones due to incomplete payload")
+    @DisplayName("POST:/drones/bulk/ should fail registering drones due to incomplete payload")
     @Order(16)
     public void POSTdrones_Bulk_Should_Fail_Registering_With_Incomplete_Payload() throws Exception {
     
@@ -340,7 +340,7 @@ public class A01_DroneEndpointTest extends EndpointTest {
         );
 
 
-        HttpResponse<String> response = client(postRequest("/drones/bulk", payload));
+        HttpResponse<String> response = client(postRequest("/drones/bulk/", payload));
 
         assertEquals(400, response.statusCode(), "Invalid response code");
         assertTrue(isValidContentType(response), "Content is not JSON-encoded on update check!");
@@ -349,7 +349,7 @@ public class A01_DroneEndpointTest extends EndpointTest {
     }
 
     @Test
-    @DisplayName("POST:/drones/bulk should register three new drones")
+    @DisplayName("POST:/drones/bulk/ should register three new drones")
     @Order(17)
     public void POSTdrones_Bulk_Should_Register_Three_New_Drones() throws Exception {
 
@@ -376,7 +376,7 @@ public class A01_DroneEndpointTest extends EndpointTest {
         );
 
 
-        HttpResponse<String> response = client(postRequest("/drones/bulk", payload));
+        HttpResponse<String> response = client(postRequest("/drones/bulk/", payload));
 
         assertEquals(201, response.statusCode(), "Invalid response code");
         assertTrue(isValidContentType(response), "Content is not JSON-encoded on update check!");

@@ -23,8 +23,11 @@ import ar.com.caputo.drones.exception.UnmetConditionsException;
 
 public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
+    protected final DroneRepository repository;
+
     public DroneEndpoint() {
         super("/drones", new DroneRepository());
+        this.repository = (DroneRepository) super.repository; 
     }
 
     protected void registerRoutes() {
@@ -59,10 +62,12 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
      */
     public void getAvailableDrones() {
 
-        get(BASE_ENDPOINT + "/available", (req, resp) -> {
+        get(BASE_ENDPOINT + "/available/", (req, resp) -> {
 
-            return buildResponse(repository.getDao().queryForEq("state", Drone.State.IDLE).stream()
-                    .filter(drone -> drone.getBatteryLevel() >= 25).collect(Collectors.toList()));
+            List<Drone> availableDrones = repository.getDao().queryForAll().stream()
+            .filter(drone -> drone.canBeLoaded()).collect(Collectors.toList());
+
+            return buildBulkResponse(availableDrones.size(), availableDrones);
 
         });
 
@@ -135,7 +140,7 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
     @Override
     public void bulkAdd() {
 
-        post(BASE_ENDPOINT + "/bulk", PAYLOAD_ENCODING, (req, resp) -> {
+        post(BASE_ENDPOINT + "/bulk/", PAYLOAD_ENCODING, (req, resp) -> {
 
             JsonObject requestBody = DroneService.GSON.fromJson(req.body(), JsonObject.class); 
             JsonArray bulkData = requestBody.get("bulk").getAsJsonArray();
@@ -197,10 +202,6 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
     }
 
-    public List<Drone> getAllDrones() {
-        return repository.listAll();
-    }
-
     public void loadItem() {
 
         post(BASE_ENDPOINT + "/:id/items", (req, resp) -> {
@@ -231,17 +232,25 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
                 return buildResponse("Item ".concat(medicationCode).concat(" is already associated to another drone!"));
             }
 
-            if(targetDrone.canHold(medication.getWeight())) {
-                medication.setAssociatedDrone(targetDrone);
-                DroneService.getInstance().getMedicationEndpoint().repository.update(medication);
-                resp.status(200);
-                return buildResponse("Item ".concat(medicationCode).concat(" was loaded to drone ".concat(targetDrone.id())));
+            if(targetDrone.canBeLoaded()) {
+
+                if(targetDrone.canHold(medication.getWeight())) {
+                    medication.setAssociatedDrone(targetDrone);
+                    DroneService.getInstance().getMedicationEndpoint().repository.update(medication);
+                    resp.status(200);
+                    return buildResponse("Item ".concat(medicationCode).concat(" was loaded to drone ".concat(targetDrone.id())));
+                } else {
+
+                    resp.status(422);
+                    return buildResponse("Item ".concat(medicationCode).concat( " exceeds weight limit for drone ".concat(targetDrone.id())));
+
+                }
+
             } else {
-
                 resp.status(422);
-                return buildResponse("Item ".concat(medicationCode).concat( " exceeds weight limit for drone ".concat(targetDrone.id())));
-
+                return buildResponse("Drone ".concat(targetDrone.id()).concat(" cannot be loaded at this moment!"));
             }
+
 
         });
 
@@ -273,10 +282,15 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
             }
 
             if(medication.getAssociatedDrone().equals(targetDrone)) {
-                medication.setAssociatedDrone(null);
-                DroneService.getInstance().getMedicationEndpoint().repository.update(medication);
-                resp.status(200);
-                return buildResponse("Item ".concat(medicationCode).concat(" was unloaded from drone ".concat(targetDrone.id())));
+
+                if(targetDrone.canBeUnloaded()) {
+                    medication.setAssociatedDrone(null);
+                    DroneService.getInstance().getMedicationEndpoint().repository.update(medication);
+                    resp.status(200);
+                    return buildResponse("Item ".concat(medicationCode).concat(" was unloaded from drone ".concat(targetDrone.id())));
+                }
+                    resp.status(422);
+                    return buildResponse("Drone ".concat(targetDrone.id()).concat(" cannot be unloaded at this moment!"));
             } else {
 
                 resp.status(400);
@@ -286,6 +300,11 @@ public class DroneEndpoint extends RestfulEndpoint<Drone> {
 
         });
 
+    }
+
+    @Override
+    public DroneRepository getRepository() {
+        return this.repository;
     }
 
 }
